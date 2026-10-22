@@ -9,7 +9,7 @@ tool({
     let notes = store.get("notes", [{ id: Date.now(), title: "โน้ตแรก", text: "" }]), cur = notes[0].id;
     const ui = h(`<div><div class="tabs" id="tabs"></div>
       <input class="input" id="title" placeholder="ชื่อโน้ต" style="font-weight:600">
-      <textarea class="input" id="t" style="font-family:var(--sans);font-size:1rem;min-height:260px;margin-top:10px" placeholder="เริ่มพิมพ์…"></textarea>
+      <textarea class="input" id="t" style="font-family:var(--font-body);font-size:1rem;min-height:260px;margin-top:10px" placeholder="เริ่มพิมพ์…"></textarea>
       <div class="actions"><button class="btn btn-ghost btn-sm" id="cp">คัดลอก</button><button class="btn btn-ghost btn-sm" id="dl">ส่งออก .txt</button><button class="btn btn-ghost btn-sm" id="del">ลบโน้ตนี้</button></div>
       <p class="hint" id="saved">บันทึกอัตโนมัติไว้ในเบราว์เซอร์ของเครื่องนี้</p></div>`);
     body.append(ui);
@@ -50,7 +50,7 @@ tool({
     body.append(ui);
     const save = () => { store.set("todo", items); draw(); };
     const draw = () => {
-      $("#list", ui).innerHTML = items.map((x, i) => `<li class="${x.done ? "done" : ""}"><input type="checkbox" data-i="${i}" ${x.done ? "checked" : ""} style="accent-color:var(--gold);width:18px;height:18px"><span>${esc(x.t)}</span><button data-rm="${i}" aria-label="ลบ">✕</button></li>`).join("") || `<li style="justify-content:center;color:var(--faint)">ยังไม่มีงาน 🎉</li>`;
+      $("#list", ui).innerHTML = items.map((x, i) => `<li class="${x.done ? "done" : ""}"><input type="checkbox" data-i="${i}" ${x.done ? "checked" : ""} style="accent-color:var(--color-accent);width:18px;height:18px"><span>${esc(x.t)}</span><button data-rm="${i}" aria-label="ลบ">✕</button></li>`).join("") || `<li style="justify-content:center;color:var(--color-text-subtle)">ยังไม่มีงาน 🎉</li>`;
       const left = items.filter(x => !x.done).length; $("#cnt", ui).textContent = items.length ? `เหลือ ${left} จาก ${items.length} งาน` : "";
     };
     $("#f", ui).onsubmit = e => { e.preventDefault(); const v = $("#t", ui).value.trim(); if (!v) return; items.unshift({ t: v, done: false }); $("#t", ui).value = ""; save(); };
@@ -180,7 +180,7 @@ tool({
   desc: "ใส่ตัวเลือกแล้วหมุนวงล้อ ช่วยตัดสินใจ กินอะไรดี ใครจ่าย หรือจับฉลาก",
   keywords: "wheel spin picker วงล้อ สุ่ม กินอะไรดี จับฉลาก",
   render(body) {
-    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--sans);min-height:110px" placeholder="หนึ่งตัวเลือกต่อบรรทัด"></textarea>
+    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--font-body);min-height:110px" placeholder="หนึ่งตัวเลือกต่อบรรทัด"></textarea>
       <div class="wheel-wrap"><canvas id="cv" width="680" height="680"></canvas></div>
       <div class="center"><div class="actions"><button class="btn btn-gold" id="go">หมุนวงล้อ</button></div><div class="big sm" id="res"></div></div></div>`);
     body.append(ui);

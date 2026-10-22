@@ -123,12 +123,12 @@ tool({
   desc: "แปลง Unix timestamp ⇄ วันเวลา (ไทย/UTC/ISO) พร้อมเวลาปัจจุบันแบบสด",
   keywords: "unix timestamp epoch date time แปลงเวลา",
   render(body) {
-    const ui = h(`<div><div class="result center"><small style="color:var(--muted)">ตอนนี้ (วินาที)</small><div class="big sm" id="now"></div></div>
+    const ui = h(`<div><div class="result center"><small style="color:var(--color-text-muted)">ตอนนี้ (วินาที)</small><div class="big sm" id="now"></div></div>
       <div class="row"><div class="field"><label>Timestamp (วินาทีหรือมิลลิวินาที)</label><input class="input" id="ts"></div><div class="field"><label>หรือเลือกวันเวลา</label><input class="input" type="datetime-local" id="dt" step="1"></div></div>
       <div class="kv" id="kv"></div></div>`);
     body.append(ui);
     const show = d => {
-      if (isNaN(d)) { $("#kv", ui).innerHTML = `<span style="color:var(--danger)">ค่าไม่ถูกต้อง</span>`; return; }
+      if (isNaN(d)) { $("#kv", ui).innerHTML = `<span style="color:var(--color-danger)">ค่าไม่ถูกต้อง</span>`; return; }
       const rows = [["วินาที", Math.floor(d / 1000)], ["มิลลิวินาที", d.getTime()], ["เวลาไทย", d.toLocaleString("th-TH", { dateStyle: "full", timeStyle: "medium" })], ["UTC", d.toUTCString()], ["ISO 8601", d.toISOString()]];
       $("#kv", ui).innerHTML = rows.map(([k, v]) => `<span>${k}</span><code>${esc(v)}</code><button class="btn btn-ghost btn-sm" data-c="${esc(v)}">คัดลอก</button>`).join("");
       $$("[data-c]", ui).forEach(b => b.onclick = () => copy(b.dataset.c));

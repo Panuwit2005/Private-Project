@@ -212,7 +212,7 @@ tool({
   keywords: "text to speech tts อ่าน ออกเสียง พูด voice",
   render(body) {
     if (!("speechSynthesis" in window)) { body.append(h(`<div class="note">เบราว์เซอร์นี้ไม่รองรับการอ่านออกเสียง</div>`)); return; }
-    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--sans);font-size:1rem">สวัสดีครับ ยินดีต้อนรับสู่ Lumière Tools</textarea>
+    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--font-body);font-size:1rem">สวัสดีครับ ยินดีต้อนรับสู่ Lumière Tools</textarea>
       <div class="row"><div class="field"><label>เสียง</label><select class="input" id="voice"></select></div>
       <div class="field"><label>ความเร็ว: <span id="rv">1</span>x</label><input type="range" id="rate" min="0.5" max="2" step="0.1" value="1"></div>
       <div class="field"><label>ระดับเสียง: <span id="pv">1</span></label><input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1"></div></div>
@@ -250,7 +250,7 @@ tool({
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { body.append(h(`<div class="note">เบราว์เซอร์นี้ไม่รองรับการแปลงเสียงเป็นข้อความ ลองใช้ Chrome หรือ Safari</div>`)); return; }
     const ui = h(`<div><div class="row"><div class="field"><label>ภาษา</label><select class="input" id="lang"><option value="th-TH">ไทย</option><option value="en-US">English</option></select></div></div>
-      <textarea class="input" id="t" style="font-family:var(--sans);font-size:1rem;margin-top:14px" placeholder="ข้อความจะปรากฏที่นี่…"></textarea>
+      <textarea class="input" id="t" style="font-family:var(--font-body);font-size:1rem;margin-top:14px" placeholder="ข้อความจะปรากฏที่นี่…"></textarea>
       <div class="actions"><button class="btn btn-gold" id="go">● เริ่มฟัง</button><button class="btn btn-ghost" id="cp">คัดลอก</button><button class="btn btn-ghost" id="clr">ล้าง</button></div>
       <div class="status" id="st"></div><p class="hint">การแปลงเสียงอาจส่งเสียงไปประมวลผลที่บริการของเบราว์เซอร์ (เช่น Google/Apple)</p></div>`);
     body.append(ui);

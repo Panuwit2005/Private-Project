@@ -107,7 +107,7 @@ tool({
   render(body) {
     const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>ยอดจัด / เงินกู้ (บาท)</label><input class="input" id="p" inputmode="decimal" value="500000"></div><div class="field"><label>ดอกเบี้ย (% ต่อปี)</label><input class="input" id="r" inputmode="decimal" value="3.5"></div></div>
       <div class="row"><div class="field"><label>ระยะเวลา (เดือน)</label><input class="input" id="n" inputmode="numeric" value="60"></div><div class="field"><label>วิธีคิดดอกเบี้ย</label><select class="input" id="m"><option value="flat">คงที่ (Flat rate) — รถยนต์</option><option value="eff">ลดต้นลดดอก — บ้าน/สินเชื่อ</option></select></div></div>
-      <div class="result center"><small style="color:var(--muted)">ค่างวดต่อเดือน</small><div class="big sm" id="pay"></div></div><div class="kv" id="kv"></div></div>`);
+      <div class="result center"><small style="color:var(--color-text-muted)">ค่างวดต่อเดือน</small><div class="big sm" id="pay"></div></div><div class="kv" id="kv"></div></div>`);
     body.append(ui);
     const run = () => {
       const P = num($("#p", ui).value), r = num($("#r", ui).value) / 100, n = Math.max(1, Math.round(num($("#n", ui).value)));
@@ -128,7 +128,7 @@ tool({
   render(body) {
     const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>เงินต้นเริ่มต้น</label><input class="input" id="p" inputmode="decimal" value="10000"></div><div class="field"><label>ออมเพิ่มต่อเดือน</label><input class="input" id="m" inputmode="decimal" value="3000"></div></div>
       <div class="row"><div class="field"><label>ผลตอบแทน (% ต่อปี)</label><input class="input" id="r" inputmode="decimal" value="5"></div><div class="field"><label>ระยะเวลา (ปี)</label><input class="input" id="y" inputmode="numeric" value="10"></div></div>
-      <div class="result center"><small style="color:var(--muted)">มูลค่าในอนาคต</small><div class="big sm" id="fv"></div></div><div class="kv" id="kv"></div></div>`);
+      <div class="result center"><small style="color:var(--color-text-muted)">มูลค่าในอนาคต</small><div class="big sm" id="fv"></div></div><div class="kv" id="kv"></div></div>`);
     body.append(ui);
     const run = () => {
       const P = num($("#p", ui).value), M = num($("#m", ui).value), i = num($("#r", ui).value) / 100 / 12, n = Math.round(num($("#y", ui).value) * 12);
@@ -148,7 +148,7 @@ tool({
   render(body) {
     const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>เงินเดือน (บาท/เดือน)</label><input class="input" id="s" inputmode="decimal" value="40000"></div><div class="field"><label>โบนัส/รายได้อื่นต่อปี</label><input class="input" id="b" inputmode="decimal" value="0"></div></div>
       <div class="row"><div class="field"><label>ค่าลดหย่อนเพิ่มเติม (ประกันสังคม, ประกันชีวิต, กองทุน ฯลฯ)</label><input class="input" id="d" inputmode="decimal" value="9000"></div></div>
-      <div class="result center"><small style="color:var(--muted)">ภาษีที่ต้องจ่ายต่อปี (ประมาณ)</small><div class="big sm" id="tax"></div></div><div class="kv" id="kv"></div>
+      <div class="result center"><small style="color:var(--color-text-muted)">ภาษีที่ต้องจ่ายต่อปี (ประมาณ)</small><div class="big sm" id="tax"></div></div><div class="kv" id="kv"></div>
       <p class="hint">คำนวณตามอัตราภาษีขั้นบันได หักค่าใช้จ่าย 50% (สูงสุด 100,000) และลดหย่อนส่วนตัว 60,000 บาท ผลลัพธ์เป็นค่าประมาณ ไม่ใช่คำแนะนำทางภาษี</p></div>`);
     body.append(ui);
     const BR = [[150000, 0], [300000, .05], [500000, .10], [750000, .15], [1000000, .20], [2000000, .25], [5000000, .30], [Infinity, .35]];
@@ -173,7 +173,7 @@ tool({
     const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>น้ำหนัก (กก.)</label><input class="input" id="w" inputmode="decimal" value="65"></div><div class="field"><label>ส่วนสูง (ซม.)</label><input class="input" id="hgt" inputmode="decimal" value="170"></div></div>
       <div class="row"><div class="field"><label>อายุ (ปี)</label><input class="input" id="a" inputmode="numeric" value="30"></div><div class="field"><label>เพศ</label><select class="input" id="g"><option value="m">ชาย</option><option value="f">หญิง</option></select></div>
       <div class="field"><label>กิจกรรม</label><select class="input" id="act"><option value="1.2">นั่งทำงาน ไม่ออกกำลัง</option><option value="1.375">ออกกำลัง 1-3 วัน/สัปดาห์</option><option value="1.55" selected>ออกกำลัง 3-5 วัน/สัปดาห์</option><option value="1.725">ออกกำลัง 6-7 วัน/สัปดาห์</option></select></div></div>
-      <div class="result center"><small style="color:var(--muted)">BMI</small><div class="big sm" id="bmi"></div><b id="lvl"></b></div><div class="kv" id="kv"></div></div>`);
+      <div class="result center"><small style="color:var(--color-text-muted)">BMI</small><div class="big sm" id="bmi"></div><b id="lvl"></b></div><div class="kv" id="kv"></div></div>`);
     body.append(ui);
     const run = () => {
       const w = num($("#w", ui).value), hm = num($("#hgt", ui).value) / 100, a = num($("#a", ui).value), male = $("#g", ui).value === "m";
@@ -225,7 +225,7 @@ tool({
     const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>ยอดรวมในบิล (บาท)</label><input class="input" id="t" inputmode="decimal" value="2450"></div><div class="field"><label>จำนวนคน</label><input class="input" id="n" inputmode="numeric" value="4"></div></div>
       <div class="actions"><label class="check"><input type="checkbox" id="sc"> Service charge 10%</label><label class="check"><input type="checkbox" id="vat"> VAT 7%</label></div>
       <div class="row"><div class="field"><label>ทิป (%)</label><input class="input" id="tip" inputmode="decimal" value="0"></div><div class="field"><label>ปัดเศษ</label><select class="input" id="rd"><option value="1">ปัดขึ้นเป็นบาท</option><option value="10">ปัดขึ้นทีละ 10</option><option value="0">ไม่ปัด</option></select></div></div>
-      <div class="result center"><small style="color:var(--muted)">จ่ายคนละ</small><div class="big sm" id="each"></div></div><div class="kv" id="kv"></div></div>`);
+      <div class="result center"><small style="color:var(--color-text-muted)">จ่ายคนละ</small><div class="big sm" id="each"></div></div><div class="kv" id="kv"></div></div>`);
     body.append(ui);
     const run = () => {
       let t = num($("#t", ui).value); const n = Math.max(1, Math.round(num($("#n", ui).value)));
@@ -254,7 +254,7 @@ tool({
     };
     const ui = h(`<div><div class="tabs" id="k">${Object.keys(U).map((k, i) => `<button class="chip${i ? "" : " active"}">${k}</button>`).join("")}</div>
       <div class="row"><div class="field"><label>จาก</label><input class="input" type="number" id="v" value="1" /><select class="input" id="a"></select></div>
-      <div class="field"><label>เป็น</label><input class="input" id="r" readonly style="font-weight:600;color:var(--gold-hi)" /><select class="input" id="b"></select></div></div>
+      <div class="field"><label>เป็น</label><input class="input" id="r" readonly style="font-weight:600;color:var(--color-accent-strong)" /><select class="input" id="b"></select></div></div>
       <div class="actions"><button class="btn btn-ghost btn-sm" id="sw">⇄ สลับ</button></div></div>`);
     body.append(ui);
     let kind = Object.keys(U)[0];

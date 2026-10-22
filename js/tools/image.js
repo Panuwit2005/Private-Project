@@ -200,7 +200,7 @@ tool({
         const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * cv.width / r.width, y = (e.clientY - r.top) * cv.height / r.height;
         const p = ctx.getImageData(x, y, 1, 1).data, hx = hex([p[0], p[1], p[2]]);
         const el = $("#pick", ui); el.hidden = false;
-        el.innerHTML = `<div style="display:flex;gap:14px;align-items:center"><span style="width:48px;height:48px;border-radius:12px;background:${hx};border:1px solid var(--border)"></span><div><b>${hx}</b><br><small>rgb(${p[0]}, ${p[1]}, ${p[2]})</small></div><button class="btn btn-ghost btn-sm" style="margin-left:auto">คัดลอก</button></div>`;
+        el.innerHTML = `<div style="display:flex;gap:14px;align-items:center"><span style="width:48px;height:48px;border-radius:12px;background:${hx};border:1px solid var(--color-border)"></span><div><b>${hx}</b><br><small>rgb(${p[0]}, ${p[1]}, ${p[2]})</small></div><button class="btn btn-ghost btn-sm" style="margin-left:auto">คัดลอก</button></div>`;
         $("button", el).onclick = () => copy(hx);
       };
     }), ui);

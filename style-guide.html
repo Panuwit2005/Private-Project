@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Lumière Style Guide</title>
+  <meta name="theme-color" content="#0c0a09" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <style>
+    .sg { padding: var(--space-7) 0 var(--space-8); display: grid; gap: var(--space-5); }
+    .sg section { padding: var(--space-6); }
+    .sg h2 { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 600; margin-bottom: var(--space-4); }
+    .sg h3 { font-size: var(--text-sm); color: var(--color-text-subtle); font-weight: 500; letter-spacing: .04em; margin: var(--space-5) 0 var(--space-3); }
+    .tokens { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
+    .tok { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; background: var(--surface-glass); }
+    .tok i { display: block; height: 64px; }
+    .tok div { padding: var(--space-2) var(--space-3); font-size: var(--text-xs); }
+    .tok b { display: block; font-weight: 500; font-size: var(--text-sm); }
+    .tok code { font-family: var(--font-mono); color: var(--color-text-subtle); }
+    .tok .ratio { color: var(--color-success); }
+    .tok .ratio.fail { color: var(--color-danger); }
+    .type-row { display: flex; align-items: baseline; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); flex-wrap: wrap; }
+    .type-row code { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-subtle); min-width: 140px; }
+    .space-row { display: flex; align-items: center; gap: var(--space-3); margin: 6px 0; font-size: var(--text-xs); color: var(--color-text-subtle); }
+    .space-row span:first-child { width: 90px; font-family: var(--font-mono); }
+    .space-row i { height: 12px; border-radius: 4px; background: var(--accent-grad); }
+    .demo-row { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center; }
+    .motion-demo { width: 56px; height: 56px; border-radius: var(--radius-md); background: var(--accent-grad); cursor: pointer; }
+    .motion-demo:hover { transform: translateX(120px); }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header class="nav-wrap">
+    <nav class="nav glass container">
+      <a href="./" class="logo"><span class="logo-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ecd29a" stroke-width="1.6"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6z"/></svg></span>Lumière</a>
+      <a href="./" class="btn btn-ghost btn-sm">← กลับไปหน้าเครื่องมือ</a>
+    </nav>
+  </header>
+
+  <main class="container sg">
+    <div>
+      <span class="eyebrow">Design System · Luxury Dark</span>
+      <h1 class="gold" style="font-family:var(--font-display);font-size:var(--text-display);line-height:1.05;margin-top:var(--space-4)">Style Guide</h1>
+      <p style="color:var(--color-text-muted);max-width:620px;margin-top:var(--space-3)">ค่าทั้งหมดในหน้านี้อ่านสดจาก <code>css/tokens.css</code> — แก้ token ที่เดียว ทั้งเว็บเปลี่ยนตาม ตัวเลขคอนทราสต์คำนวณเทียบกับพื้นหลัง</p>
+    </div>
+
+    <section class="glass">
+      <h2>สี</h2>
+      <h3>ตัวอักษร & แอคเซนต์ (คอนทราสต์เทียบ --color-bg)</h3>
+      <div class="tokens" id="textTokens"></div>
+      <h3>พื้นผิว & เส้นขอบ</h3>
+      <div class="tokens" id="surfaceTokens"></div>
+    </section>
+
+    <section class="glass">
+      <h2>ตัวอักษร</h2>
+      <div class="type-row"><code>--font-display</code><span style="font-family:var(--font-display);font-size:2.6rem;font-weight:600;line-height:1">Lumière <em class="gold">Tools</em></span></div>
+      <div class="type-row"><code>--text-2xl · display</code><span style="font-family:var(--font-display);font-size:var(--text-2xl);font-weight:600">ทุกเครื่องมือในที่เดียว</span></div>
+      <div class="type-row"><code>--text-xl · body 600</code><span style="font-size:var(--text-xl);font-weight:600">แปลง & บีบอัดรูปภาพ</span></div>
+      <div class="type-row"><code>--text-base · body</code><span>ประมวลผลบนเครื่องของคุณทั้งหมด ไฟล์ไม่ถูกอัปโหลด</span></div>
+      <div class="type-row"><code>--text-sm · muted</code><span style="font-size:var(--text-sm);color:var(--color-text-muted)">คำอธิบายรอง ข้อความประกอบ</span></div>
+      <div class="type-row"><code>--text-xs · subtle (ขั้นต่ำ)</code><span style="font-size:var(--text-xs);color:var(--color-text-subtle)">ป้ายหมวดหมู่ · คำแนะนำ · placeholder</span></div>
+      <div class="type-row"><code>eyebrow · caps</code><span class="eyebrow">The Essential Toolkit</span></div>
+      <div class="type-row"><code>--font-mono</code><span style="font-family:var(--font-mono);font-size:var(--text-sm)">sha256: 2cf24dba5fb0a30e…</span></div>
+    </section>
+
+    <section class="glass">
+      <h2>ปุ่ม & ตัวควบคุม</h2>
+      <div class="demo-row">
+        <button class="btn btn-gold">ปุ่มหลัก</button>
+        <button class="btn btn-ghost">ปุ่มรอง</button>
+        <button class="btn btn-gold btn-sm">เล็ก</button>
+        <button class="btn btn-ghost btn-sm">เล็ก</button>
+        <button class="btn btn-gold" disabled>ปิดใช้งาน</button>
+      </div>
+      <h3>ชิป / ตัวกรอง</h3>
+      <div class="demo-row"><button class="chip active">ทั้งหมด</button><button class="chip">รูปภาพ</button><button class="chip">เสียง & วิดีโอ</button></div>
+      <h3>ช่องกรอก (กด Tab เพื่อดู focus ring)</h3>
+      <div class="row" style="margin-top:0">
+        <div class="field"><label for="sg1">ชื่อไฟล์</label><input class="input" id="sg1" placeholder="เช่น รูปภาพ.png"></div>
+        <div class="field"><label for="sg2">รูปแบบ</label><select class="input" id="sg2"><option>WEBP</option><option>JPG</option></select></div>
+      </div>
+      <div class="status">สถานะปกติ — เสร็จแล้ว ✓</div>
+      <div class="status err">ข้อผิดพลาด — ระบุสาเหตุเป็นข้อความเสมอ</div>
+      <div class="progress"><div style="width:62%"></div></div>
+    </section>
+
+    <section class="glass">
+      <h2>การ์ด</h2>
+      <div class="grid">
+        <div class="tool-card glass" tabindex="0" role="button">
+          <button class="star on" aria-label="เลิกปักหมุด"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2l3 7 7 .5-5.5 4.5 2 7L12 17l-6.5 4 2-7L2 9.5 9 9z"/></svg></button>
+          <span class="cat">รูปภาพ</span>
+          <span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span>
+          <h3 style="margin:0;color:var(--color-text);font-size:1.12rem;font-weight:600;letter-spacing:0">การ์ดเครื่องมือ</h3>
+          <p>ชี้หรือแตะเพื่อดูการยกตัวและเส้นขอบสีทอง</p><span class="go">เปิดเครื่องมือ →</span>
+        </div>
+        <div class="result"><b>กล่องผลลัพธ์</b><br><span style="color:var(--color-text-muted)">ใช้แสดงคำตอบหลักของเครื่องมือ</span></div>
+      </div>
+    </section>
+
+    <section class="glass">
+      <h2>ระยะห่าง & มุมโค้ง</h2>
+      <div id="spaces"></div>
+      <h3>มุมโค้ง</h3>
+      <div class="demo-row" id="radii"></div>
+    </section>
+
+    <section class="glass">
+      <h2>การเคลื่อนไหว</h2>
+      <p style="color:var(--color-text-muted);margin-bottom:var(--space-4)">ชี้ที่กล่องแต่ละอัน — ออกเร็วกว่าเข้าเสมอ ปิดอัตโนมัติเมื่อเปิด “ลดการเคลื่อนไหว” ในเครื่อง</p>
+      <div style="display:grid;gap:var(--space-4)" id="motion"></div>
+    </section>
+  </main>
+
+  <script>
+    const css = getComputedStyle(document.documentElement);
+    const v = (n) => css.getPropertyValue(n).trim();
+    const lum = (hex) => { const c = hex.replace("#", "").match(/../g).map(x => parseInt(x, 16) / 255).map(x => x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+    const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + .05) / (y + .05); };
+    const bg = v("--color-bg");
+    const tile = (name, note) => {
+      const val = v(name), hex = /^#[0-9a-f]{6}$/i.test(val);
+      const r = hex && !note ? ratio(val, bg) : null;
+      return `<div class="tok"><i style="background:var(${name})"></i><div><b>${name.replace("--color-", "").replace("--", "")}</b><code>${val}</code>${r ? `<br><span class="ratio${r < 4.5 ? " fail" : ""}">${r.toFixed(1)}:1 ${r >= 7 ? "AAA" : r >= 4.5 ? "AA" : "ไม่ผ่าน"}</span>` : note ? `<br><code>${note}</code>` : ""}</div></div>`;
+    };
+    document.getElementById("textTokens").innerHTML = ["--color-text", "--color-text-muted", "--color-text-subtle", "--color-accent", "--color-accent-strong", "--color-accent-deep", "--color-danger", "--color-success"].map(n => tile(n)).join("");
+    document.getElementById("surfaceTokens").innerHTML = [["--color-bg", "page background"], ["--color-surface", "solid surface"], ["--color-surface-raised", "raised surface"], ["--accent-grad", "gradient"], ["--surface-glass", "glass"], ["--color-border", "decorative"], ["--color-border-strong", "controls ≥3:1"], ["--color-border-accent", "accent"]].map(([n, note]) => tile(n, note)).join("");
+    document.getElementById("spaces").innerHTML = [1, 2, 3, 4, 5, 6, 7, 8].map(i => `<div class="space-row"><span>--space-${i}</span><i style="width:var(--space-${i})"></i><span>${v("--space-" + i)}</span></div>`).join("");
+    document.getElementById("radii").innerHTML = ["sm", "md", "lg", "pill"].map(r => `<div style="width:72px;height:56px;border:1px solid var(--color-border-accent);background:var(--surface-glass);border-radius:var(--radius-${r});display:grid;place-items:center;font-size:var(--text-xs);color:var(--color-text-subtle)">${r}</div>`).join("");
+    document.getElementById("motion").innerHTML = [["--dur-fast", "--ease-out"], ["--dur-base", "--ease-out"], ["--dur-slow", "--ease-out"]].map(([d, e]) => `<div class="space-row"><span>${d}<br>${v(d)}</span><div class="motion-demo" style="transition:transform var(${d}) var(${e})"></div></div>`).join("");
+  </script>
+</body>
+</html>

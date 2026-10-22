@@ -1,0 +1,117 @@
+/* Lumière Tools — design tokens ("Luxury Dark").
+   Layer 1 primitives → layer 2 semantic roles → layer 3 component tokens.
+   Components use semantic/component tokens only, never primitives or raw hex.
+   Contrast ratios are measured against --color-bg (#0c0a09); see design-system/lumiere-tools/MASTER.md. */
+
+:root {
+  color-scheme: dark;
+
+  /* ---------- 1. Primitives ---------- */
+  /* Warm stone neutrals (from the "Luxury/Premium Brand" palette, shifted to dark tones) */
+  --stone-950: #0c0a09;
+  --stone-925: #12100e;
+  --stone-900: #1c1917;
+  --stone-800: #292524;
+  --stone-700: #44403c;
+  --stone-500: #8a8173;
+  --stone-400: #a39a8c;
+  --stone-300: #c9c0b1;
+  --stone-100: #f5f0e6;
+  /* Champagne gold — lighter tonal variants of #CA8A04 for dark surfaces */
+  --gold-200: #ecd29a;
+  --gold-400: #d8b46a;
+  --gold-600: #a8843f;
+  --gold-900: #1a1408;
+  /* Ambient tints for background orbs only */
+  --tint-amber: #6b4e1f;
+  --tint-plum: #3a2f5c;
+  --tint-teal: #1f4a4a;
+  /* Status */
+  --red-300: #ff8a80;
+  --green-300: #8fd9a8;
+
+  /* ---------- 2. Semantic roles ---------- */
+  --color-bg: var(--stone-950);
+  --color-surface: var(--stone-900);
+  --color-surface-raised: var(--stone-800);
+  --color-text: var(--stone-100);           /* 17.4:1 */
+  --color-text-muted: var(--stone-300);     /* 11.0:1 — secondary copy */
+  --color-text-subtle: var(--stone-400);    /*  7.1:1 — captions, labels, placeholders */
+  --color-accent: var(--gold-400);          /* 10.0:1 */
+  --color-accent-strong: var(--gold-200);   /* 13.4:1 — hover, emphasis, focus ring */
+  --color-accent-deep: var(--gold-600);     /*  5.7:1 */
+  --color-on-accent: var(--gold-900);       /*  9.3:1 on accent */
+  --color-danger: var(--red-300);           /*  8.7:1 */
+  --color-success: var(--green-300);        /* 11.9:1 */
+  --color-border: rgba(255, 255, 255, .1);              /* decorative dividers */
+  --color-border-strong: rgba(245, 240, 230, .32);      /* input/control outlines (≥3:1) */
+  --color-border-accent: rgba(216, 180, 106, .4);
+  --color-focus: var(--gold-200);
+  --color-scrim: rgba(4, 4, 6, .7);
+
+  --accent-grad: linear-gradient(135deg, var(--gold-200) 0%, var(--gold-400) 40%, var(--gold-600) 100%);
+
+  /* Glass surfaces */
+  --surface-glass: rgba(255, 255, 255, .045);
+  --surface-glass-hover: rgba(255, 255, 255, .08);
+  --surface-glass-grad: linear-gradient(150deg, rgba(255, 255, 255, .075), rgba(255, 255, 255, .02));
+  --surface-panel: linear-gradient(150deg, rgba(30, 28, 26, .96), rgba(14, 14, 16, .97));
+  --surface-input: rgba(0, 0, 0, .28);
+  --glass-blur: blur(22px) saturate(140%);
+
+  /* Typography */
+  --font-display: "Cormorant Garamond", "IBM Plex Sans Thai", serif;
+  --font-body: "IBM Plex Sans Thai", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --text-xs: .8125rem;   /* 13px — minimum for any readable text */
+  --text-sm: .875rem;    /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-display: clamp(2.8rem, 7vw, 5.6rem);
+  --leading-tight: 1.1;
+  --leading-body: 1.6;
+  --tracking-caps: .28em;
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-glass: 0 24px 60px -24px rgba(0, 0, 0, .7), inset 0 1px 0 rgba(255, 255, 255, .08);
+  --shadow-accent: 0 10px 30px -10px rgba(216, 180, 106, .7), inset 0 1px 0 rgba(255, 255, 255, .5);
+  --shadow-accent-hover: 0 16px 40px -10px rgba(216, 180, 106, .8);
+
+  /* Motion — exits are faster than entrances */
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 400ms;
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --ease-in: cubic-bezier(.4, 0, 1, 1);
+
+  /* ---------- 3. Component tokens ---------- */
+  --control-height: 44px;           /* minimum touch target */
+  --control-height-sm: 40px;
+  --btn-radius: var(--radius-pill);
+  --card-radius: var(--radius-lg);
+  --card-padding: 26px;
+  --input-radius: var(--radius-md);
+  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-focus);
+}
+
+@media (pointer: coarse) {
+  :root { --control-height-sm: 44px; }
+}

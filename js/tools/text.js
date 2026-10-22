@@ -5,7 +5,7 @@ tool({
   desc: "นับตัวอักษร คำ (รองรับภาษาไทย) บรรทัด แปลงตัวพิมพ์ใหญ่-เล็ก ลบช่องว่างซ้ำ",
   keywords: "word count character uppercase lowercase นับคำ ตัวอักษร",
   render(body) {
-    const ui = h(`<div><textarea class="input" id="t" placeholder="พิมพ์หรือวางข้อความที่นี่…" style="font-family:var(--sans);font-size:.95rem"></textarea>
+    const ui = h(`<div><textarea class="input" id="t" placeholder="พิมพ์หรือวางข้อความที่นี่…" style="font-family:var(--font-body);font-size:.95rem"></textarea>
       <div class="stats-row"><div><b id="c">0</b><span>ตัวอักษร</span></div><div><b id="cn">0</b><span>ไม่รวมช่องว่าง</span></div><div><b id="w">0</b><span>คำ</span></div><div><b id="l">0</b><span>บรรทัด</span></div><div><b id="rd">0</b><span>นาทีอ่าน</span></div></div>
       <div class="actions">
         <button class="btn btn-ghost btn-sm" data-a="up">ตัวพิมพ์ใหญ่</button><button class="btn btn-ghost btn-sm" data-a="low">ตัวพิมพ์เล็ก</button>
@@ -46,7 +46,7 @@ tool({
   desc: "ลืมเปลี่ยนภาษา? แปลง “l;ylfu” เป็น “สวัสดี” และกลับกัน ตามแป้นพิมพ์เกษมณี",
   keywords: "keyboard wrong language พิมพ์ผิดภาษา เปลี่ยนภาษา thai english kedmanee",
   render(body) {
-    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--sans);font-size:1rem" placeholder="วางข้อความที่พิมพ์ผิดภาษา เช่น l;ylfu">l;ylfu</textarea>
+    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--font-body);font-size:1rem" placeholder="วางข้อความที่พิมพ์ผิดภาษา เช่น l;ylfu">l;ylfu</textarea>
       <div class="actions"><button class="btn btn-gold btn-sm" data-d="auto">แปลงอัตโนมัติ</button><button class="btn btn-ghost btn-sm" data-d="th">EN → ไทย</button><button class="btn btn-ghost btn-sm" data-d="en">ไทย → EN</button></div>
       <div class="result" id="out"></div><div class="actions"><button class="btn btn-ghost btn-sm" id="cp">คัดลอกผลลัพธ์</button></div></div>`);
     body.append(ui);
@@ -102,7 +102,7 @@ tool({
     body.append(ui);
     const run = () => {
       const r = bahtText($("#n", ui).value);
-      $("#out", ui).innerHTML = r ? `<b>${r}</b><br><small style="color:var(--muted)">${money(num($("#n", ui).value))} บาท</small>` : `<span style="color:var(--danger)">กรุณากรอกตัวเลข</span>`;
+      $("#out", ui).innerHTML = r ? `<b>${r}</b><br><small style="color:var(--color-text-muted)">${money(num($("#n", ui).value))} บาท</small>` : `<span style="color:var(--color-danger)">กรุณากรอกตัวเลข</span>`;
     };
     $("#n", ui).oninput = run; run();
     $("#cp", ui).onclick = () => copy(bahtText($("#n", ui).value) || "");
@@ -151,7 +151,7 @@ tool({
   desc: "ค้นหาและแทนที่ข้อความทั้งหมดในคลิกเดียว รองรับ Regex และไม่สนตัวพิมพ์เล็ก-ใหญ่",
   keywords: "find replace ค้นหา แทนที่ regex",
   render(body) {
-    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--sans)" placeholder="ข้อความต้นฉบับ"></textarea>
+    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--font-body)" placeholder="ข้อความต้นฉบับ"></textarea>
       <div class="row"><div class="field"><label>ค้นหา</label><input class="input" id="f"></div><div class="field"><label>แทนที่ด้วย</label><input class="input" id="r"></div></div>
       <div class="actions"><label class="check"><input type="checkbox" id="re"> Regex</label><label class="check"><input type="checkbox" id="ci" checked> ไม่สนตัวพิมพ์เล็ก-ใหญ่</label></div>
       <div class="actions"><button class="btn btn-gold btn-sm" id="go">แทนที่ทั้งหมด</button><button class="btn btn-ghost btn-sm" id="cp">คัดลอก</button></div><div class="status" id="st"></div></div>`);
@@ -175,7 +175,7 @@ tool({
   desc: "เรียงลำดับ ลบบรรทัดซ้ำ ลบบรรทัดว่าง สลับ สุ่ม ใส่เลขลำดับ ให้รายการยาว ๆ",
   keywords: "sort lines dedupe unique shuffle เรียง ลบซ้ำ รายการ",
   render(body) {
-    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--sans)">ส้ม\nกล้วย\nแอปเปิ้ล\nกล้วย\n\nมะม่วง</textarea>
+    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--font-body)">ส้ม\nกล้วย\nแอปเปิ้ล\nกล้วย\n\nมะม่วง</textarea>
       <div class="actions">
         <button class="btn btn-ghost btn-sm" data-a="az">เรียง ก-ฮ / A-Z</button><button class="btn btn-ghost btn-sm" data-a="za">เรียงย้อนกลับ</button>
         <button class="btn btn-ghost btn-sm" data-a="dedupe">ลบบรรทัดซ้ำ</button><button class="btn btn-ghost btn-sm" data-a="empty">ลบบรรทัดว่าง</button>
