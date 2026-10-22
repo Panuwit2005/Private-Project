@@ -246,3 +246,50 @@ tool({
     $('[data-b="10"]', ui).value = "2026"; $('[data-b="10"]', ui).oninput();
   },
 });
+
+tool({
+  id: "device-info", cat: "dev", also: ["daily"], icon: I.monitor, name: "ข้อมูลอุปกรณ์ & เบราว์เซอร์",
+  desc: "ดูขนาดหน้าจอ ความละเอียด เบราว์เซอร์ ภาษา เขตเวลา การรองรับฟีเจอร์ และพื้นที่เก็บข้อมูลของเครื่องนี้",
+  keywords: "device info user agent screen resolution browser ข้อมูลเครื่อง ขนาดจอ",
+  render(body) {
+    const ui = h(`<div><div class="kv" id="kv"></div><div class="actions"><button class="btn btn-ghost btn-sm" id="cp">คัดลอกทั้งหมด</button></div></div>`);
+    body.append(ui);
+    const rows = [];
+    const draw = async () => {
+      const n = navigator, s = screen, mm = (q) => matchMedia(q).matches;
+      rows.length = 0;
+      rows.push(["หน้าจอ", `${s.width} × ${s.height} px (×${devicePixelRatio} = ${Math.round(s.width * devicePixelRatio)} × ${Math.round(s.height * devicePixelRatio)})`],
+        ["พื้นที่แสดงผล", `${innerWidth} × ${innerHeight} px`], ["ระบบ/เบราว์เซอร์", n.userAgent], ["ภาษา", (n.languages || [n.language]).join(", ")],
+        ["เขตเวลา", Intl.DateTimeFormat().resolvedOptions().timeZone], ["ธีมระบบ", mm("(prefers-color-scheme: dark)") ? "มืด" : "สว่าง"],
+        ["ลดการเคลื่อนไหว", mm("(prefers-reduced-motion: reduce)") ? "เปิด" : "ปิด"], ["จอสัมผัส", n.maxTouchPoints > 0 ? `ใช่ (${n.maxTouchPoints} จุด)` : "ไม่ใช่"],
+        ["CPU (เธรด)", n.hardwareConcurrency || "ไม่ทราบ"], ["ติดตั้งเป็นแอป", mm("(display-mode: standalone)") || n.standalone ? "ใช่" : "ไม่ใช่"], ["ออนไลน์", n.onLine ? "ใช่" : "ไม่ใช่"]);
+      if (n.connection?.effectiveType) rows.push(["เครือข่าย", n.connection.effectiveType]);
+      if (n.storage?.estimate) { try { const e = await n.storage.estimate(); rows.push(["พื้นที่ที่เว็บนี้ใช้", `${fmtSize(e.usage || 0)} จาก ${fmtSize(e.quota || 0)}`]); } catch {} }
+      $("#kv", ui).innerHTML = rows.map(([k, v]) => `<span>${k}</span><code>${esc(v)}</code><span></span>`).join("");
+    };
+    $("#cp", ui).onclick = () => copy(rows.map(([k, v]) => `${k}: ${v}`).join("\n"));
+    addEventListener("resize", draw); draw();
+    return () => removeEventListener("resize", draw);
+  },
+});
+
+tool({
+  id: "html-entity", cat: "dev", icon: I.code, name: "HTML Entity / Escape",
+  desc: "แปลงอักขระพิเศษเป็น HTML entity (&lt; &amp; &quot;) และถอดกลับ รวมถึง escape สำหรับ JavaScript/JSON string",
+  keywords: "html entity escape unescape encode decode &lt; &amp; string",
+  render(body) {
+    const ui = h(`<div><textarea class="input" id="t">&lt;a href="x"&gt;ร้านกาแฟ & ขนม&lt;/a&gt;</textarea>
+      <div class="actions"><button class="btn btn-gold btn-sm" data-a="enc">HTML encode</button><button class="btn btn-ghost btn-sm" data-a="dec">HTML decode</button><button class="btn btn-ghost btn-sm" data-a="js">JS/JSON escape</button><button class="btn btn-ghost btn-sm" data-a="unjs">JS/JSON unescape</button><button class="btn btn-ghost btn-sm" data-a="cp">คัดลอก</button></div><div class="status" id="st"></div></div>`);
+    body.append(ui);
+    $$("[data-a]", ui).forEach(b => b.onclick = () => {
+      const t = $("#t", ui), a = b.dataset.a; setStatus($("#st", ui), "");
+      if (a === "cp") return copy(t.value);
+      try {
+        if (a === "enc") t.value = esc(t.value);
+        if (a === "dec") { const x = document.createElement("textarea"); x.innerHTML = t.value; t.value = x.value; } // RCDATA: decodes entities, never runs markup
+        if (a === "js") t.value = JSON.stringify(t.value).slice(1, -1);
+        if (a === "unjs") t.value = JSON.parse(`"${t.value.replace(/(^|[^\\])"/g, '$1\\"')}"`);
+      } catch (e) { setStatus($("#st", ui), "แปลงไม่ได้: " + e.message, true); }
+    });
+  },
+});

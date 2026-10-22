@@ -366,3 +366,66 @@ tool({
     $("#cp", ui).onclick = () => text && copy(text);
   },
 });
+
+tool({
+  id: "countdown", cat: "daily", icon: I.calendar, name: "นับถอยหลังวันสำคัญ",
+  desc: "บันทึกวันสำคัญ เช่น วันเกิด วันสอบ ทริป วันครบรอบ แล้วดูว่าเหลืออีกกี่วัน เรียงจากใกล้ที่สุด",
+  keywords: "countdown นับถอยหลัง วันสำคัญ วันเกิด วันสอบ อีกกี่วัน",
+  render(body) {
+    let ev = store.get("countdown", [{ t: "ปีใหม่", d: `${new Date().getFullYear() + 1}-01-01`, y: true }]);
+    const ui = h(`<div><form class="row" id="f" style="margin-top:0"><div class="field" style="flex:2"><label>ชื่อวัน</label><input class="input" id="t" required></div><div class="field"><label>วันที่</label><input class="input" type="date" id="d" required></div><div class="field" style="flex:0 0 auto"><label class="check"><input type="checkbox" id="y"> ทุกปี</label></div><button class="btn btn-gold">เพิ่ม</button></form>
+      <div class="clock-list" id="l"></div></div>`);
+    body.append(ui);
+    const next = (x) => { const today = new Date(); today.setHours(0, 0, 0, 0); let d = new Date(x.d + "T00:00"); if (x.y) { d.setFullYear(today.getFullYear()); if (d < today) d.setFullYear(today.getFullYear() + 1); } return [d, Math.round((d - today) / 864e5)]; };
+    const draw = () => {
+      const list = ev.map((x, i) => [x, i, ...next(x)]).sort((a, b) => (a[3] < 0) - (b[3] < 0) || a[3] - b[3]);
+      $("#l", ui).innerHTML = list.map(([x, i, d, n]) => `<div><span>${esc(x.t)}${x.y ? " 🔁" : ""}<br><small>${d.toLocaleDateString("th-TH", { weekday: "short", day: "numeric", month: "long", year: "numeric" })}</small></span><span style="display:flex;align-items:center;gap:10px"><b>${n === 0 ? "วันนี้!" : n > 0 ? n + " วัน" : "ผ่านมา " + -n + " วัน"}</b><button class="rm" data-rm="${i}" aria-label="ลบ ${esc(x.t)}">✕</button></span></div>`).join("") || `<p class="hint">ยังไม่มีวันสำคัญ</p>`;
+    };
+    $("#f", ui).onsubmit = e => { e.preventDefault(); ev.push({ t: $("#t", ui).value.trim(), d: $("#d", ui).value, y: $("#y", ui).checked }); store.set("countdown", ev); e.target.reset(); draw(); };
+    $("#l", ui).onclick = e => { const b = e.target.closest("[data-rm]"); if (b) { ev.splice(+b.dataset.rm, 1); store.set("countdown", ev); draw(); } };
+    draw();
+  },
+});
+
+tool({
+  id: "habits", cat: "daily", icon: I.check, name: "ติดตามนิสัย (Habit)",
+  desc: "ติ๊กนิสัยที่ทำในแต่ละวัน เช่น ดื่มน้ำ ออกกำลังกาย อ่านหนังสือ ดูย้อนหลัง 7 วันและจำนวนวันติดต่อกัน",
+  keywords: "habit tracker นิสัย ติดตาม streak ออกกำลังกาย ดื่มน้ำ วินัย",
+  render(body) {
+    let hs = store.get("habits", [{ n: "ดื่มน้ำ 8 แก้ว", done: [] }, { n: "ออกกำลังกาย", done: [] }, { n: "อ่านหนังสือ 20 นาที", done: [] }]);
+    const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const days = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - 6 + i); return d; });
+    const ui = h(`<div><div class="table-wrap"><table class="data-table"><thead><tr><th>นิสัย</th>${days.map(d => `<th>${d.toLocaleDateString("th-TH", { weekday: "narrow" })}<br>${d.getDate()}</th>`).join("")}<th>ติดต่อกัน</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+      <form class="row" id="f"><div class="field"><input class="input" id="n" placeholder="เพิ่มนิสัยใหม่" required></div><button class="btn btn-ghost">เพิ่ม</button></form></div>`);
+    body.append(ui);
+    const streak = (h) => { let n = 0; const d = new Date(); if (!h.done.includes(iso(d))) d.setDate(d.getDate() - 1); while (h.done.includes(iso(d))) { n++; d.setDate(d.getDate() - 1); } return n; };
+    const draw = () => {
+      $("#tb", ui).innerHTML = hs.map((h, i) => `<tr><td>${esc(h.n)}</td>${days.map(d => `<td style="text-align:center"><input type="checkbox" aria-label="${esc(h.n)} ${iso(d)}" data-h="${i}" data-d="${iso(d)}" ${h.done.includes(iso(d)) ? "checked" : ""} style="width:22px;height:22px;accent-color:var(--color-accent)"></td>`).join("")}<td>${streak(h)} วัน 🔥</td><td><button class="rm" data-rm="${i}" aria-label="ลบ">✕</button></td></tr>`).join("");
+    };
+    $("#tb", ui).onchange = e => { const c = e.target.closest("[data-h]"); if (!c) return; const h = hs[+c.dataset.h]; h.done = c.checked ? [...new Set([...h.done, c.dataset.d])] : h.done.filter(x => x !== c.dataset.d); h.done = h.done.filter(x => x >= iso(new Date(Date.now() - 400 * 864e5))); store.set("habits", hs); draw(); };
+    $("#tb", ui).onclick = e => { const b = e.target.closest("[data-rm]"); if (b && confirm("ลบนิสัยนี้?")) { hs.splice(+b.dataset.rm, 1); store.set("habits", hs); draw(); } };
+    $("#f", ui).onsubmit = e => { e.preventDefault(); hs.push({ n: $("#n", ui).value.trim(), done: [] }); store.set("habits", hs); e.target.reset(); draw(); };
+    draw();
+  },
+});
+
+tool({
+  id: "quick-links", cat: "daily", icon: I.link, name: "ลิงก์ส่วนตัว",
+  desc: "รวมลิงก์เว็บที่ใช้บ่อย (ธนาคาร งาน เรียน โซเชียล) ไว้ที่เดียว แตะเพื่อเปิด จัดกลุ่มได้",
+  keywords: "bookmark links ลิงก์ บุ๊กมาร์ก เว็บที่ใช้บ่อย",
+  render(body) {
+    let ls = store.get("links", [{ n: "GitHub repo ของฉัน", u: "https://github.com/Panuwit2005/Private-Project", g: "งาน" }]);
+    const ui = h(`<div><form class="row" id="f" style="margin-top:0"><div class="field"><label>ชื่อ</label><input class="input" id="n" required></div><div class="field" style="flex:2"><label>ลิงก์</label><input class="input" id="u" type="url" placeholder="https://" required></div><div class="field"><label>กลุ่ม</label><input class="input" id="g" placeholder="ทั่วไป"></div><button class="btn btn-gold">เพิ่ม</button></form><div id="l"></div></div>`);
+    body.append(ui);
+    const draw = () => {
+      const groups = [...new Set(ls.map(x => x.g || "ทั่วไป"))];
+      $("#l", ui).innerHTML = groups.map(g => `<h3 style="margin:18px 0 8px;font-size:1rem">${esc(g)}</h3><div class="out" style="margin:0">${ls.map((x, i) => [x, i]).filter(([x]) => (x.g || "ทั่วไป") === g).map(([x, i]) => `<div class="file-item"><div class="meta"><b>${esc(x.n)}</b><small>${esc(x.u.replace(/^https?:\/\//, ""))}</small></div><a class="btn btn-gold btn-sm" href="${esc(x.u)}" target="_blank" rel="noopener noreferrer">เปิด ↗</a><button class="rm" data-rm="${i}" aria-label="ลบ ${esc(x.n)}">✕</button></div>`).join("")}</div>`).join("") || `<p class="hint">ยังไม่มีลิงก์</p>`;
+    };
+    $("#f", ui).onsubmit = e => {
+      e.preventDefault(); let u = $("#u", ui).value.trim(); if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+      ls.push({ n: $("#n", ui).value.trim(), u, g: $("#g", ui).value.trim() }); store.set("links", ls); e.target.reset(); draw();
+    };
+    $("#l", ui).onclick = e => { const b = e.target.closest("[data-rm]"); if (b) { ls.splice(+b.dataset.rm, 1); store.set("links", ls); draw(); } };
+    draw();
+  },
+});

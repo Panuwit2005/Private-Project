@@ -46,6 +46,12 @@ const LIB = {
   jsqr: "vendor/jsQR.js",
   marked: "vendor/marked.min.js",
   pdfjs: "vendor/pdf.min.js",
+  jszip: "vendor/jszip.min.js",
+  xlsx: "vendor/xlsx.full.min.js",
+  mammoth: "vendor/mammoth.browser.min.js",
+  gifenc: "vendor/gifenc.js",
+  heic: "vendor/heic2any.min.js",
+  yaml: "vendor/js-yaml.min.js",
 };
 const loaded = {};
 function loadScript(src) {
@@ -132,6 +138,7 @@ const I = {
   scan: icon('<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/>'),
   palette: icon('<path d="M12 22a10 10 0 1 1 10-10c0 3-2.5 4-4.5 4H15a2 2 0 0 0-1.5 3.3A2 2 0 0 1 12 22z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="16.5" cy="10.5" r="1"/>'),
   calendar: icon('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
+  convert: icon('<path d="M4 7h13l-3-3M20 17H7l3 3"/><rect x="2" y="10" width="6" height="4" rx="1"/><rect x="16" y="10" width="6" height="4" rx="1"/>'),
   clapper: icon('<path d="M4 11v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8H4z"/><path d="m4 11-.9-3.5a2 2 0 0 1 1.4-2.4l11.6-3a2 2 0 0 1 2.4 1.4L19.4 7 4 11zM6.2 6.2l3.1 3.9M12.4 4.6l3.1 3.9"/>'),
   trend: icon('<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/><path d="M15 7h5v5"/>'),
   scroll: icon('<path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M10 8h6M10 12h6"/>'),
@@ -162,6 +169,7 @@ const I = {
 // Categories in display order. To add a category: add an entry here, create js/tools/<id>.js,
 // list that file in index.html and sw.js, then register tools with cat: "<id>".
 const CATS = [
+  { id: "convert", name: "แปลงไฟล์", icon: I.convert, desc: "แปลงนามสกุลไฟล์ทุกชนิด รูป HEIC เสียง วิดีโอ PDF Excel Word ZIP และ GIF" },
   { id: "creator", name: "ช่วยทำคลิป", icon: I.clapper, desc: "สคริปต์ เทเลพรอมป์เตอร์ ซับไตเติล ภาพปก และวางแผนคอนเทนต์" },
   { id: "invest", name: "พอร์ตหุ้น & ลงทุน", icon: I.trend, desc: "ติดตามพอร์ต ถัวเฉลี่ย ปันผล ค่าธรรมเนียม และขนาดสถานะ" },
   { id: "image", name: "รูปภาพ", icon: I.image, desc: "แปลง บีบอัด ครอป ลายน้ำ และจัดการรูปภาพ" },

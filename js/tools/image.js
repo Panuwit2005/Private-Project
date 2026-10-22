@@ -264,3 +264,158 @@ tool({
     draw();
   },
 });
+
+tool({
+  id: "img-redact", cat: "image", icon: I.stamp, name: "ปิดบังข้อมูลในรูป",
+  desc: "ลากคลุมส่วนที่ไม่อยากให้เห็น เช่น เลขบัญชี ชื่อ หน้า หรือป้ายทะเบียน แล้วเบลอ ทำโมเสก หรือปิดแถบดำ",
+  keywords: "blur pixelate redact censor เบลอ โมเสก ปิดข้อมูล ปิดหน้า สลิป แคปจอ",
+  render(body) {
+    let img, file, regions = [], drag;
+    const ui = h(`<div hidden><div class="tabs" id="mode"><button class="chip active" data-m="pixel">โมเสก</button><button class="chip" data-m="blur">เบลอ</button><button class="chip" data-m="black">แถบดำ</button></div>
+      <p class="hint">ลากนิ้วหรือเมาส์บนรูปเพื่อเลือกพื้นที่ (เลือกได้หลายจุด) · ข้อมูลสำคัญอย่างเลขบัญชีหรือเลขบัตร ใช้ “แถบดำ” ปลอดภัยที่สุด เพราะโมเสก/เบลอบางครั้งถอดกลับได้</p>
+      <div class="canvas-wrap"><canvas id="cv" style="touch-action:none;cursor:crosshair"></canvas></div>
+      <div class="actions"><button class="btn btn-gold" id="save">บันทึกรูป</button><button class="btn btn-ghost" id="undo">ย้อนกลับ</button><button class="btn btn-ghost" id="clr">ล้างทั้งหมด</button></div></div>`);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูปหรือภาพแคปหน้าจอ", hint: "รูปไม่ถูกอัปโหลด" }, async ([f]) => { img = await loadImage(f); file = f; regions = []; ui.hidden = false; draw(); }), ui);
+    let mode = "pixel";
+    $("#mode", ui).onclick = e => { const b = e.target.closest("[data-m]"); if (!b) return; mode = b.dataset.m; $$("#mode .chip", ui).forEach(x => x.classList.toggle("active", x === b)); };
+    const cv = $("#cv", ui), ctx = cv.getContext("2d");
+    const apply = (r) => {
+      const [x, y, w, hh] = [Math.min(r.x0, r.x1), Math.min(r.y0, r.y1), Math.abs(r.x1 - r.x0), Math.abs(r.y1 - r.y0)];
+      if (w < 2 || hh < 2) return;
+      if (r.m === "black") { ctx.fillStyle = "#000"; ctx.fillRect(x, y, w, hh); return; }
+      const cell = Math.max(6, Math.round(Math.max(cv.width, cv.height) / 80));
+      const t = document.createElement("canvas"); const sw = Math.max(1, Math.round(w / (r.m === "pixel" ? cell : cell / 2))), sh = Math.max(1, Math.round(hh / (r.m === "pixel" ? cell : cell / 2)));
+      t.width = sw; t.height = sh; const tx = t.getContext("2d"); tx.imageSmoothingEnabled = true; tx.drawImage(cv, x, y, w, hh, 0, 0, sw, sh);
+      ctx.save(); ctx.imageSmoothingEnabled = r.m === "blur"; ctx.drawImage(t, 0, 0, sw, sh, x, y, w, hh);
+      if (r.m === "blur") { for (let k = 0; k < 2; k++) { tx.drawImage(cv, x, y, w, hh, 0, 0, sw, sh); ctx.drawImage(t, 0, 0, sw, sh, x, y, w, hh); } }
+      ctx.restore();
+    };
+    function draw() {
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight; ctx.drawImage(img, 0, 0);
+      regions.forEach(apply);
+      if (drag) { ctx.strokeStyle = "#d8b46a"; ctx.lineWidth = Math.max(2, cv.width / 400); ctx.setLineDash([10, 6]); ctx.strokeRect(drag.x0, drag.y0, drag.x1 - drag.x0, drag.y1 - drag.y0); ctx.setLineDash([]); }
+    }
+    const pt = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+    cv.onpointerdown = e => { cv.setPointerCapture(e.pointerId); const [x, y] = pt(e); drag = { x0: x, y0: y, x1: x, y1: y, m: mode }; };
+    cv.onpointermove = e => { if (!drag) return; [drag.x1, drag.y1] = pt(e); draw(); };
+    cv.onpointerup = () => { if (drag) { regions.push(drag); drag = null; draw(); } };
+    $("#undo", ui).onclick = () => { regions.pop(); draw(); };
+    $("#clr", ui).onclick = () => { regions = []; draw(); };
+    $("#save", ui).onclick = async () => { const jpg = file.type === "image/jpeg"; download(await canvasBlob(cv, jpg ? "image/jpeg" : "image/png", .92), baseName(file.name) + "_hidden." + (jpg ? "jpg" : "png")); };
+  },
+});
+
+tool({
+  id: "img-chroma", cat: "image", also: ["creator"], icon: I.drop, name: "ลบพื้นหลังสีเดียว",
+  desc: "ลบพื้นหลังสีพื้น (ขาว เขียว ฟ้า) ให้โปร่งใส เหมาะกับโลโก้ ลายเซ็นที่ถ่ายจากกระดาษ หรือกรีนสกรีน",
+  keywords: "remove background transparent chroma key green screen ลบพื้นหลัง พื้นใส โลโก้",
+  render(body) {
+    let img, file, key = [255, 255, 255];
+    const ui = h(`<div hidden><div class="row"><div class="field" style="flex:0 0 90px"><label>สีที่จะลบ</label><input type="color" id="kc" value="#ffffff"></div><div class="field"><label>ความไว: <span id="tv">40</span></label><input type="range" id="tol" min="5" max="160" value="40"></div><div class="field"><label>ขอบนุ่ม: <span id="sv">20</span></label><input type="range" id="soft" min="0" max="80" value="20"></div></div>
+      <p class="hint">แตะบนรูปเพื่อเลือกสีพื้นหลังที่จะลบ</p>
+      <div class="canvas-wrap"><canvas id="cv" style="cursor:crosshair"></canvas></div>
+      <div class="actions"><button class="btn btn-gold" id="save">บันทึก PNG พื้นใส</button></div></div>`);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูป", hint: "พื้นหลังควรเป็นสีเดียวเรียบ ๆ" }, async ([f]) => {
+      img = await loadImage(f); file = f; ui.hidden = false;
+      const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight; const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+      key = [...x.getImageData(2, 2, 1, 1).data.slice(0, 3)]; $("#kc", ui).value = "#" + key.map(v => pad(v.toString(16))).join(""); draw();
+    }), ui);
+    const cv = $("#cv", ui), ctx = cv.getContext("2d", { willReadFrequently: true });
+    function draw() {
+      if (!img) return;
+      const s = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+      cv.width = img.naturalWidth * s; cv.height = img.naturalHeight * s; ctx.drawImage(img, 0, 0, cv.width, cv.height);
+      const d = ctx.getImageData(0, 0, cv.width, cv.height), p = d.data, tol = +$("#tol", ui).value, soft = +$("#soft", ui).value;
+      for (let i = 0; i < p.length; i += 4) {
+        const dist = Math.hypot(p[i] - key[0], p[i + 1] - key[1], p[i + 2] - key[2]);
+        if (dist < tol) p[i + 3] = 0; else if (dist < tol + soft) p[i + 3] = Math.round(255 * (dist - tol) / soft);
+      }
+      ctx.putImageData(d, 0, 0);
+    }
+    $("#kc", ui).oninput = e => { key = [1, 3, 5].map(i => parseInt(e.target.value.slice(i, i + 2), 16)); draw(); };
+    $("#tol", ui).oninput = e => { $("#tv", ui).textContent = e.target.value; draw(); };
+    $("#soft", ui).oninput = e => { $("#sv", ui).textContent = e.target.value; draw(); };
+    cv.onclick = e => {
+      const r = cv.getBoundingClientRect(), t = document.createElement("canvas"); t.width = cv.width; t.height = cv.height;
+      const tx = t.getContext("2d"); tx.drawImage(img, 0, 0, t.width, t.height);
+      key = [...tx.getImageData((e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height, 1, 1).data.slice(0, 3)];
+      $("#kc", ui).value = "#" + key.map(v => pad(v.toString(16))).join(""); draw();
+    };
+    $("#save", ui).onclick = async () => download(await canvasBlob(cv), baseName(file.name) + "_transparent.png");
+  },
+});
+
+tool({
+  id: "img-adjust", cat: "image", icon: I.palette, name: "ปรับแสง สี & ฟิลเตอร์",
+  desc: "ปรับความสว่าง คอนทราสต์ ความอิ่มสี อุณหภูมิสี และฟิลเตอร์ขาวดำ/ซีเปีย ดูผลทันที",
+  keywords: "brightness contrast saturation filter ฟิลเตอร์ ปรับแสง ขาวดำ ซีเปีย แต่งรูป",
+  render(body) {
+    let img, file, base;
+    const S = [["br", "ความสว่าง", -100, 100, 0], ["ct", "คอนทราสต์", -100, 100, 0], ["sa", "ความอิ่มสี", -100, 100, 0], ["wa", "อุณหภูมิสี (อุ่น/เย็น)", -100, 100, 0]];
+    const ui = h(`<div hidden>${S.map(([id, l, a, b, v]) => `<div class="field" style="margin-top:10px"><label>${l}: <span id="${id}v">${v}</span></label><input type="range" id="${id}" min="${a}" max="${b}" value="${v}"></div>`).join("")}
+      <div class="tabs" style="margin-top:14px" id="fx"><button class="chip active" data-f="none">ปกติ</button><button class="chip" data-f="gray">ขาวดำ</button><button class="chip" data-f="sepia">ซีเปีย</button><button class="chip" data-f="invert">กลับสี</button></div>
+      <div class="canvas-wrap"><canvas id="cv"></canvas></div>
+      <div class="actions"><button class="btn btn-gold" id="save">บันทึกรูป</button><button class="btn btn-ghost" id="rs">รีเซ็ต</button></div></div>`);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูป", hint: "ปรับแล้วดูผลทันที" }, async ([f]) => {
+      img = await loadImage(f); file = f; ui.hidden = false;
+      const s = Math.min(1, 2400 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
+      c.width = img.naturalWidth * s; c.height = img.naturalHeight * s; const x = c.getContext("2d"); x.drawImage(img, 0, 0, c.width, c.height);
+      base = x.getImageData(0, 0, c.width, c.height); draw();
+    }), ui);
+    let fx = "none";
+    const cv = $("#cv", ui), ctx = cv.getContext("2d");
+    function draw() {
+      if (!base) return;
+      cv.width = base.width; cv.height = base.height;
+      const out = new ImageData(new Uint8ClampedArray(base.data), base.width, base.height), p = out.data;
+      const br = +$("#br", ui).value * 1.28, c = +$("#ct", ui).value, cf = (259 * (c + 255)) / (255 * (259 - c)), sa = 1 + $("#sa", ui).value / 100, wa = +$("#wa", ui).value * .3;
+      for (let i = 0; i < p.length; i += 4) {
+        let r = p[i], g = p[i + 1], b = p[i + 2];
+        r = cf * (r - 128) + 128 + br + wa; g = cf * (g - 128) + 128 + br; b = cf * (b - 128) + 128 + br - wa;
+        const l = .299 * r + .587 * g + .114 * b; r = l + (r - l) * sa; g = l + (g - l) * sa; b = l + (b - l) * sa;
+        if (fx === "gray") r = g = b = .299 * r + .587 * g + .114 * b;
+        else if (fx === "sepia") [r, g, b] = [r * .393 + g * .769 + b * .189, r * .349 + g * .686 + b * .168, r * .272 + g * .534 + b * .131];
+        else if (fx === "invert") [r, g, b] = [255 - r, 255 - g, 255 - b];
+        p[i] = r; p[i + 1] = g; p[i + 2] = b;
+      }
+      ctx.putImageData(out, 0, 0);
+    }
+    S.forEach(([id]) => $("#" + id, ui).oninput = e => { $(`#${id}v`, ui).textContent = e.target.value; draw(); });
+    $("#fx", ui).onclick = e => { const b = e.target.closest("[data-f]"); if (!b) return; fx = b.dataset.f; $$("#fx .chip", ui).forEach(x => x.classList.toggle("active", x === b)); draw(); };
+    $("#rs", ui).onclick = () => { S.forEach(([id, , , , v]) => { $("#" + id, ui).value = v; $(`#${id}v`, ui).textContent = v; }); fx = "none"; $$("#fx .chip", ui).forEach((x, i) => x.classList.toggle("active", !i)); draw(); };
+    $("#save", ui).onclick = async () => { const jpg = file.type === "image/jpeg"; download(await canvasBlob(cv, jpg ? "image/jpeg" : "image/png", .92), baseName(file.name) + "_edit." + (jpg ? "jpg" : "png")); };
+  },
+});
+
+tool({
+  id: "img-frame", cat: "image", also: ["creator"], icon: I.crop, name: "เติมขอบ & ทำภาพจัตุรัส",
+  desc: "ใส่รูปลงกรอบจัตุรัสหรือสัดส่วนที่ต้องการโดยไม่ต้องครอป เติมขอบสีหรือพื้นหลังเบลอ เหมาะกับโพสต์ IG",
+  keywords: "frame border padding square no crop ใส่กรอบ เติมขอบ ภาพจัตุรัส ig ไม่ครอป",
+  render(body) {
+    let img, file;
+    const ui = h(`<div hidden><div class="tabs" id="ar"><button class="chip active" data-r="1">1:1</button><button class="chip" data-r="0.8">4:5</button><button class="chip" data-r="0.5625">9:16</button><button class="chip" data-r="1.7778">16:9</button></div>
+      <div class="row"><div class="field"><label>ระยะขอบ: <span id="pv">6</span>%</label><input type="range" id="pd" min="0" max="25" value="6"></div><div class="field"><label>มุมโค้งของรูป</label><input type="range" id="rd" min="0" max="20" value="0"></div>
+      <div class="field"><label>พื้นหลัง</label><select class="input" id="bgm"><option value="color">สีพื้น</option><option value="blur">รูปเดิมแบบเบลอ</option></select></div><div class="field" style="flex:0 0 80px"><label>สี</label><input type="color" id="bg" value="#ffffff"></div></div>
+      <div class="canvas-wrap"><canvas id="cv"></canvas></div><div class="actions"><button class="btn btn-gold" id="save">บันทึกรูป</button></div></div>`);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูป", hint: "รูปทั้งภาพจะอยู่ในกรอบ ไม่ถูกตัด" }, async ([f]) => { img = await loadImage(f); file = f; ui.hidden = false; draw(); }), ui);
+    let ar = 1;
+    const cv = $("#cv", ui), ctx = cv.getContext("2d");
+    function draw() {
+      if (!img) return;
+      const W = 2048, H = Math.round(W / ar), pd = $("#pd", ui).value / 100 * Math.min(W, H);
+      cv.width = W; cv.height = H;
+      if ($("#bgm", ui).value === "blur") {
+        const s = Math.max(W / img.naturalWidth, H / img.naturalHeight), t = document.createElement("canvas"); t.width = Math.ceil(W / 24); t.height = Math.ceil(H / 24);
+        t.getContext("2d").drawImage(img, (W - img.naturalWidth * s) / 2 / 24, (H - img.naturalHeight * s) / 2 / 24, img.naturalWidth * s / 24, img.naturalHeight * s / 24);
+        ctx.imageSmoothingEnabled = true; ctx.drawImage(t, 0, 0, W, H); ctx.fillStyle = "rgba(0,0,0,.15)"; ctx.fillRect(0, 0, W, H);
+      } else { ctx.fillStyle = $("#bg", ui).value; ctx.fillRect(0, 0, W, H); }
+      const s = Math.min((W - 2 * pd) / img.naturalWidth, (H - 2 * pd) / img.naturalHeight), w = img.naturalWidth * s, hh = img.naturalHeight * s, x = (W - w) / 2, y = (H - hh) / 2;
+      ctx.save(); const r = $("#rd", ui).value / 100 * Math.min(w, hh);
+      if (r && ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, w, hh, r); ctx.clip(); }
+      ctx.drawImage(img, x, y, w, hh); ctx.restore();
+    }
+    $("#ar", ui).onclick = e => { const b = e.target.closest("[data-r]"); if (!b) return; ar = +b.dataset.r; $$("#ar .chip", ui).forEach(x => x.classList.toggle("active", x === b)); draw(); };
+    $$("input, select", ui).forEach(i => i.oninput = () => { $("#pv", ui).textContent = $("#pd", ui).value; draw(); });
+    $("#save", ui).onclick = async () => download(await canvasBlob(cv, "image/jpeg", .92), baseName(file.name) + "_framed.jpg");
+  },
+});

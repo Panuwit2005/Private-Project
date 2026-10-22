@@ -379,3 +379,85 @@ tool({
     $$("input, textarea", ui).forEach(i => i.oninput = run); run();
   },
 });
+
+tool({
+  id: "unit-price", cat: "calc", also: ["daily"], icon: I.scale, name: "เทียบราคาต่อหน่วย (อันไหนคุ้ม)",
+  desc: "เทียบสินค้าหลายขนาดหลายราคา คิดเป็นราคาต่อกรัม/มล./ชิ้น แล้วบอกว่าชิ้นไหนคุ้มที่สุด เหมาะตอนช้อปปิ้ง",
+  keywords: "unit price compare คุ้ม เทียบราคา ราคาต่อหน่วย ต่อกรัม ห้าง ช้อปปิ้ง",
+  render(body) {
+    let rows = [{ n: "ขวดเล็ก", p: 25, q: 350, u: "ml" }, { n: "ขวดใหญ่", p: 59, q: 1000, u: "ml" }, { n: "แพ็ค 6", p: 135, q: 2100, u: "ml" }];
+    const U = { g: ["กรัม", "g", 1], kg: ["กิโลกรัม", "g", 1000], ml: ["มล.", "ml", 1], l: ["ลิตร", "ml", 1000], pc: ["ชิ้น", "pc", 1] };
+    const ui = h(`<div><div class="table-wrap"><table class="data-table"><thead><tr><th>สินค้า</th><th>ราคา (บาท)</th><th>ปริมาณ</th><th>หน่วย</th><th>ราคา/หน่วย</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="actions"><button class="btn btn-ghost btn-sm" id="add">+ เพิ่มสินค้า</button></div><div class="result" id="best"></div></div>`);
+    body.append(ui);
+    const tb = $("#tb", ui);
+    const draw = () => { tb.innerHTML = rows.map((r, i) => `<tr data-i="${i}"><td><input class="input sym" style="width:120px;text-transform:none" data-k="n" value="${esc(r.n)}"></td><td><input class="input" data-k="p" inputmode="decimal" value="${r.p}" style="width:80px"></td><td><input class="input" data-k="q" inputmode="decimal" value="${r.q}" style="width:80px"></td><td><select class="input" data-k="u" style="width:100px">${Object.entries(U).map(([k, v]) => `<option value="${k}"${k === r.u ? " selected" : ""}>${v[0]}</option>`).join("")}</select></td><td data-o></td><td><button class="rm" data-rm="${i}" aria-label="ลบ">✕</button></td></tr>`).join(""); calc(); };
+    const calc = () => {
+      const per = rows.map(r => { const [, base, k] = U[r.u]; const q = num(r.q) * k; return q ? { r, base, v: num(r.p) / q } : null; });
+      per.forEach((x, i) => $("[data-o]", tb.children[i]).textContent = x ? `${x.v < .1 ? (x.v * 100).toFixed(2) + " บ./100" : x.v.toFixed(3) + " บ./"}${x.base === "pc" ? "ชิ้น" : x.base}` : "–");
+      const valid = per.filter(Boolean), bases = new Set(valid.map(x => x.base));
+      if (valid.length < 2) return $("#best", ui).textContent = "ใส่อย่างน้อย 2 รายการเพื่อเทียบ";
+      if (bases.size > 1) return $("#best", ui).innerHTML = `<span style="color:var(--color-danger)">หน่วยต่างชนิดกัน (น้ำหนัก/ปริมาตร/ชิ้น) เทียบกันไม่ได้</span>`;
+      const s = [...valid].sort((a, b) => a.v - b.v), best = s[0], worst = s.at(-1);
+      $("#best", ui).innerHTML = `คุ้มที่สุด: <b>${esc(best.r.n || "ไม่มีชื่อ")}</b> — ถูกกว่า${esc(worst.r.n || "")} ${pct(1 - best.v / worst.v, 0)} ต่อหน่วย`;
+    };
+    tb.oninput = tb.onchange = e => { const inp = e.target.closest("[data-k]"); if (inp) { rows[+inp.closest("tr").dataset.i][inp.dataset.k] = inp.value; calc(); } };
+    tb.onclick = e => { const b = e.target.closest("[data-rm]"); if (b) { rows.splice(+b.dataset.rm, 1); draw(); } };
+    $("#add", ui).onclick = () => { rows.push({ n: "", p: "", q: "", u: rows[0]?.u || "g" }); draw(); };
+    draw();
+  },
+});
+
+tool({
+  id: "discount", cat: "calc", also: ["daily"], icon: I.percent, name: "ส่วนลดซ้อน & โค้ด",
+  desc: "คำนวณราคาหลังลดหลายต่อ (เช่น ลด 20% แล้วลดอีก 10% + โค้ด 100 บาท) ดูว่าลดจริงกี่เปอร์เซ็นต์",
+  keywords: "discount sale coupon ส่วนลด ลดซ้อน โค้ด คูปอง ลดกี่เปอร์เซ็นต์",
+  render(body) {
+    const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>ราคาเต็ม</label><input class="input" id="p" inputmode="decimal" value="2590"></div></div>
+      <div class="row"><div class="field"><label>ส่วนลด % (หลายต่อคั่นด้วยจุลภาค)</label><input class="input" id="d" value="20, 10"></div><div class="field"><label>โค้ด/คูปอง ลดเป็นบาท</label><input class="input" id="c" inputmode="decimal" value="100"></div><div class="field"><label>ใช้โค้ด</label><select class="input" id="o"><option value="after">หลังหัก %</option><option value="before">ก่อนหัก %</option></select></div></div>
+      <div class="result center"><small style="color:var(--color-text-muted)">ราคาที่ต้องจ่าย</small><div class="big sm" id="pay"></div></div><div class="kv" id="kv"></div></div>`);
+    body.append(ui);
+    const run = () => {
+      const p = num($("#p", ui).value), ds = $("#d", ui).value.split(/[,\s]+/).map(num).filter(Boolean), c = num($("#c", ui).value), before = $("#o", ui).value === "before";
+      let x = before ? Math.max(0, p - c) : p; const steps = [];
+      for (const d of ds) { const cut = x * d / 100; x -= cut; steps.push([`ลด ${d}%`, -cut]); }
+      if (!before) { steps.push(["โค้ด", -Math.min(c, x)]); x = Math.max(0, x - c); } else steps.unshift(["โค้ด", -Math.min(c, p)]);
+      $("#pay", ui).textContent = money(x) + " ฿";
+      $("#kv", ui).innerHTML = kvRows([["ราคาเต็ม", money(p), "บาท"], ...steps.map(([k, v]) => [k, money(v), "บาท"]), ["ประหยัดรวม", money(p - x), "บาท"], ["ลดจริงทั้งหมด", p ? pct((p - x) / p, 1) : "–", ""]]);
+    };
+    $$("input, select", ui).forEach(i => i.oninput = run); run();
+  },
+});
+
+tool({
+  id: "currency", cat: "calc", also: ["invest"], icon: I.coins, name: "แปลงสกุลเงิน (ใส่เรทเอง)",
+  desc: "แปลงเงินบาทกับสกุลอื่นตามอัตราแลกเปลี่ยนที่คุณกรอก บันทึกเรทที่ใช้บ่อยไว้ได้ เหมาะตอนเที่ยวหรือช้อปต่างประเทศ",
+  keywords: "currency exchange rate แลกเงิน สกุลเงิน ดอลลาร์ เยน วอน ยูโร usd jpy krw eur",
+  render(body) {
+    let rates = store.get("rates", [{ c: "USD", r: 33.5 }, { c: "JPY", r: 0.22 }, { c: "KRW", r: 0.024 }, { c: "EUR", r: 36.5 }]);
+    const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>จำนวน</label><input class="input" id="a" inputmode="decimal" value="100" style="font-size:1.2rem"></div><div class="field"><label>สกุล</label><select class="input" id="from"></select></div></div>
+      <div class="out" id="out"></div>
+      <h3 style="margin-top:20px;font-size:1rem">อัตราแลกเปลี่ยน (1 หน่วย = ? บาท)</h3><div class="out" id="rl"></div>
+      <div class="actions"><button class="btn btn-ghost btn-sm" id="add">+ เพิ่มสกุลเงิน</button></div>
+      <p class="hint">เรทไม่อัปเดตอัตโนมัติ ดูเรทล่าสุดจากธนาคารหรือแอปแลกเงินแล้วกรอก · ค่าเริ่มต้นเป็นตัวอย่างเท่านั้น</p></div>`);
+    body.append(ui);
+    const all = () => [{ c: "THB", r: 1 }, ...rates];
+    const draw = () => {
+      const cur = $("#from", ui).value || "THB";
+      $("#from", ui).innerHTML = all().map(x => `<option${x.c === cur ? " selected" : ""}>${esc(x.c)}</option>`).join("");
+      $("#rl", ui).innerHTML = rates.map((x, i) => `<div class="file-item"><input class="input sym" data-i="${i}" data-k="c" value="${esc(x.c)}" style="width:90px"><span>=</span><input class="input" data-i="${i}" data-k="r" inputmode="decimal" value="${x.r}" style="flex:1"><span>บาท</span><button class="rm" data-rm="${i}" aria-label="ลบ">✕</button></div>`).join("");
+      calc();
+    };
+    const calc = () => {
+      const a = num($("#a", ui).value), f = all().find(x => x.c === $("#from", ui).value) || { r: 1 }, thb = a * num(f.r);
+      $("#out", ui).innerHTML = all().filter(x => x.c !== f.c).map(x => `<div class="file-item"><div class="meta"><small>${esc(x.c)}</small><b style="font-size:1.2rem">${num(x.r) ? money(thb / num(x.r)) : "–"}</b></div></div>`).join("");
+      store.set("rates", rates);
+    };
+    $("#rl", ui).oninput = e => { const inp = e.target.closest("[data-k]"); if (inp) { rates[+inp.dataset.i][inp.dataset.k] = inp.dataset.k === "c" ? inp.value.toUpperCase() : inp.value; calc(); } };
+    $("#rl", ui).onchange = () => draw();
+    $("#rl", ui).onclick = e => { const b = e.target.closest("[data-rm]"); if (b) { rates.splice(+b.dataset.rm, 1); draw(); } };
+    $("#add", ui).onclick = () => { rates.push({ c: "NEW", r: 1 }); draw(); };
+    $("#a", ui).oninput = calc; $("#from", ui).onchange = calc;
+    draw();
+  },
+});

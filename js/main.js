@@ -16,7 +16,7 @@ function setCat(id, scroll) {
   $$(".chip", filters).forEach(x => x.classList.toggle("active", x.dataset.cat === cat));
   if (!modal.classList.contains("open")) history.replaceState(null, "", cat === "all" ? location.pathname + location.search : "#c/" + cat);
   renderGrid();
-  if (scroll) $("#tools").scrollIntoView({ behavior: "smooth" });
+  if (scroll) $(".cat-section", grid)?.scrollIntoView({ behavior: "smooth" });
 }
 filters.addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) setCat(b.dataset.cat); });
 
@@ -152,11 +152,11 @@ function closeTool() {
 $$("[data-close]", modal).forEach(el => el.onclick = closeTool);
 addEventListener("keydown", e => { if (e.key === "Escape" && modal.classList.contains("open")) closeTool(); });
 const route = location.hash.slice(1);
-if (route.startsWith("c/")) setCat(route.slice(2)); else renderGrid();
+if (route.startsWith("c/")) { setCat(route.slice(2)); requestAnimationFrame(() => $(".cat-section", grid)?.scrollIntoView()); } else renderGrid();
 if (byId(route)) openTool(route);
 addEventListener("hashchange", () => {
   const r = location.hash.slice(1);
-  if (r.startsWith("c/")) { if (modal.classList.contains("open")) closeTool(); setCat(r.slice(2)); }
+  if (r.startsWith("c/")) { if (modal.classList.contains("open")) closeTool(); setCat(r.slice(2), true); }
   else if (byId(r) && !modal.classList.contains("open")) openTool(r);
 });
 

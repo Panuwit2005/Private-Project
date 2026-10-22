@@ -330,3 +330,6 @@ input[type=color] { width: 100%; height: 46px; border-radius: 12px; border: 1px 
   .data-table td:has(> .rm)::before { content: none; }
   .data-table input, .data-table select, .data-table input.sym { width: 60% !important; max-width: 220px; min-height: 40px; }
 }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.file-item select.input { min-height: var(--control-height-sm); padding: 6px 10px; }
+details.note summary { color: var(--color-text-muted); }

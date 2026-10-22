@@ -34,7 +34,7 @@ async function encodeMp3(buf, kbps, onProgress, from = 0, to = buf.length) {
 async function decodeAudio(file) {
   const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
   try { return await ac.decodeAudioData(await file.arrayBuffer()); }
-  catch { throw new Error("เบราว์เซอร์ถอดรหัสไฟล์นี้ไม่ได้ ลองใช้ Chrome หรือไฟล์รูปแบบอื่น"); }
+  catch { throw new Error("ถอดรหัสเสียงไม่ได้ — ไฟล์อาจไม่มีเสียง หรือเบราว์เซอร์ไม่รองรับรูปแบบนี้"); }
   finally { ac.close(); }
 }
 const fmtTime = (s) => `${Math.floor(s / 60)}:${pad(Math.floor(s % 60))}`;
@@ -299,5 +299,44 @@ tool({
     };
     $("#go", ui).onclick = run;
     $("#u", ui).onkeydown = e => e.key === "Enter" && run();
+  },
+});
+
+tool({
+  id: "audio-speed", cat: "media", also: ["creator"], icon: I.speaker, name: "เปลี่ยนความเร็ว & ความดังเสียง",
+  desc: "เร่งหรือชะลอเสียง เพิ่ม/ลดความดัง และปรับระดับเสียงให้ดังเต็มที่ (Normalize) บันทึกเป็น MP3 หรือ WAV",
+  keywords: "speed volume normalize boost เร่งเสียง ชะลอ เพิ่มเสียง ดังขึ้น",
+  render(body) {
+    let audio, file;
+    const ui = h(`<div hidden><div class="status" id="info"></div>
+      <div class="row"><div class="field"><label>ความเร็ว: <span id="spv">1.00</span>x</label><input type="range" id="sp" min="0.5" max="2" step="0.05" value="1"></div><div class="field"><label>ความดัง: <span id="vv">100</span>%</label><input type="range" id="vol" min="0" max="300" step="5" value="100"></div></div>
+      <div class="actions"><label class="check"><input type="checkbox" id="norm"> Normalize (ดังสุดโดยไม่แตก)</label></div>
+      <div class="row"><div class="field"><label>รูปแบบ</label><select class="input" id="fmt"><option value="mp3">MP3 192k</option><option value="wav">WAV</option></select></div></div>
+      <p class="hint">การเปลี่ยนความเร็วจะทำให้เสียงสูงหรือต่ำลงตามไปด้วย (เหมือนเปิดเทปเร็ว/ช้า)</p>
+      <div class="actions"><button class="btn btn-gold" id="go">ประมวลผลและบันทึก</button></div><div class="progress"><div id="bar"></div></div><div class="status" id="st"></div><audio id="pl" controls style="width:100%;margin-top:12px" hidden></audio></div>`);
+    body.append(dropZone({ accept: "audio/*,video/*", title: "เลือกไฟล์เสียงหรือวิดีโอ", hint: "MP3 · M4A · WAV · MP4 …" }, async ([f]) => {
+      file = f; ui.hidden = false; setStatus($("#info", ui), "กำลังโหลด…");
+      try { audio = await decodeAudio(f); setStatus($("#info", ui), `${f.name} · ${fmtTime(audio.duration)}`); } catch (e) { setStatus($("#info", ui), e.message, true); }
+    }), ui);
+    $("#sp", ui).oninput = e => $("#spv", ui).textContent = (+e.target.value).toFixed(2);
+    $("#vol", ui).oninput = e => $("#vv", ui).textContent = e.target.value;
+    $("#go", ui).onclick = async () => {
+      if (!audio) return;
+      const st = $("#st", ui), sp = +$("#sp", ui).value, ch = Math.min(2, audio.numberOfChannels);
+      setStatus(st, "กำลังประมวลผล…");
+      const off = new OfflineAudioContext(ch, Math.ceil(audio.length / sp), audio.sampleRate);
+      const src = off.createBufferSource(); src.buffer = audio; src.playbackRate.value = sp;
+      const g = off.createGain(); g.gain.value = $("#vol", ui).value / 100; src.connect(g).connect(off.destination); src.start();
+      const out = await off.startRendering();
+      if ($("#norm", ui).checked) {
+        let peak = 0; for (let c = 0; c < ch; c++) { const d = out.getChannelData(c); for (let i = 0; i < d.length; i++) peak = Math.max(peak, Math.abs(d[i])); }
+        const k = peak ? .89 / peak : 1; for (let c = 0; c < ch; c++) { const d = out.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] *= k; }
+      }
+      const fmt = $("#fmt", ui).value, blob = fmt === "wav" ? encodeWav(out) : await encodeMp3(out, 192, p => $("#bar", ui).style.width = p * 100 + "%");
+      $("#bar", ui).style.width = "100%"; const pl = $("#pl", ui); pl.src = URL.createObjectURL(blob); pl.hidden = false;
+      setStatus(st, `เสร็จแล้ว ✓ ยาว ${fmtTime(out.duration)} · ${fmtSize(blob.size)}`);
+      download(blob, `${baseName(file.name)}_${sp}x.${fmt}`);
+    };
+    return () => $("#pl", ui).pause();
   },
 });
