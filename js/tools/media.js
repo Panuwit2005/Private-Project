@@ -41,7 +41,7 @@ const fmtTime = (s) => `${Math.floor(s / 60)}:${pad(Math.floor(s % 60))}`;
 const recExt = (mime) => mime.includes("mp4") ? "m4a" : mime.includes("ogg") ? "ogg" : "webm";
 
 tool({
-  id: "to-mp3", cat: "เสียง & วิดีโอ", icon: I.music, name: "วิดีโอ → MP3 / WAV",
+  id: "to-mp3", cat: "media", also: ["creator"], icon: I.music, name: "วิดีโอ → MP3 / WAV",
   desc: "ดึงเสียงจากไฟล์วิดีโอหรือแปลงไฟล์เสียงในเครื่องเป็น MP3 หรือ WAV เลือกบิตเรตได้",
   keywords: "mp3 wav audio extract video mp4 เสียง เพลง convert แปลง",
   render(body) {
@@ -76,7 +76,7 @@ tool({
 });
 
 tool({
-  id: "audio-trim", cat: "เสียง & วิดีโอ", icon: I.scissors, name: "ตัดเสียง / ทำริงโทน",
+  id: "audio-trim", cat: "media", also: ["creator"], icon: I.scissors, name: "ตัดเสียง / ทำริงโทน",
   desc: "ตัดช่วงที่ต้องการจากไฟล์เพลงหรือวิดีโอ ฟังตัวอย่างก่อน แล้วบันทึกเป็น MP3 หรือ WAV",
   keywords: "trim cut audio ringtone ตัด เพลง ริงโทน mp3",
   render(body) {
@@ -156,7 +156,7 @@ function recorderTool(body, { getStream, mimeHint, label, isVideo }) {
 }
 
 tool({
-  id: "voice-rec", cat: "เสียง & วิดีโอ", icon: I.mic, name: "บันทึกเสียง",
+  id: "voice-rec", cat: "media", also: ["creator"], icon: I.mic, name: "บันทึกเสียง",
   desc: "อัดเสียงจากไมโครโฟน ฟังย้อนหลัง และบันทึกเป็นไฟล์ได้ทันที",
   keywords: "voice recorder record microphone อัดเสียง ไมค์",
   render: (body) => recorderTool(body, {
@@ -166,7 +166,7 @@ tool({
 });
 
 tool({
-  id: "screen-rec", cat: "เสียง & วิดีโอ", icon: I.monitor, name: "อัดหน้าจอ",
+  id: "screen-rec", cat: "media", also: ["creator"], icon: I.monitor, name: "อัดหน้าจอ",
   desc: "บันทึกวิดีโอหน้าจอ หน้าต่าง หรือแท็บ พร้อมเสียง (ใช้ได้บนคอมพิวเตอร์)",
   keywords: "screen recorder record อัดจอ บันทึกหน้าจอ capture",
   render(body) {
@@ -182,7 +182,7 @@ tool({
 });
 
 tool({
-  id: "video-frame", cat: "เสียง & วิดีโอ", icon: I.film, name: "จับภาพจากวิดีโอ",
+  id: "video-frame", cat: "media", also: ["creator"], icon: I.film, name: "จับภาพจากวิดีโอ",
   desc: "เลื่อนหาเฟรมที่ชอบในวิดีโอแล้วบันทึกเป็นรูป PNG/JPG ความละเอียดเต็ม",
   keywords: "video frame screenshot snapshot capture จับภาพ แคป",
   render(body) {
@@ -207,7 +207,7 @@ tool({
 });
 
 tool({
-  id: "tts", cat: "เสียง & วิดีโอ", icon: I.speaker, name: "อ่านออกเสียง (TTS)",
+  id: "tts", cat: "media", also: ["creator"], icon: I.speaker, name: "อ่านออกเสียง (TTS)",
   desc: "ให้เครื่องอ่านข้อความภาษาไทยหรืออังกฤษออกเสียง ปรับความเร็วและระดับเสียงได้",
   keywords: "text to speech tts อ่าน ออกเสียง พูด voice",
   render(body) {
@@ -243,7 +243,7 @@ tool({
 });
 
 tool({
-  id: "stt", cat: "เสียง & วิดีโอ", icon: I.ear, name: "พูดเป็นข้อความ",
+  id: "stt", cat: "media", icon: I.ear, name: "พูดเป็นข้อความ",
   desc: "พูดใส่ไมโครโฟนแล้วแปลงเป็นข้อความภาษาไทยหรืออังกฤษแบบเรียลไทม์ (Chrome / Safari)",
   keywords: "speech to text dictation พิมพ์ด้วยเสียง ถอดเสียง voice typing",
   render(body) {
@@ -278,7 +278,7 @@ tool({
 });
 
 tool({
-  id: "yt-thumb", cat: "เสียง & วิดีโอ", icon: I.play, name: "ดูภาพปก YouTube",
+  id: "yt-thumb", cat: "media", also: ["creator"], icon: I.play, name: "ดูภาพปก YouTube",
   desc: "วางลิงก์ YouTube แล้วดูภาพปก (Thumbnail) ทุกความละเอียด เปิดเต็มขนาดได้ในคลิกเดียว",
   keywords: "youtube thumbnail ภาพปก ยูทูป cover",
   render(body) {

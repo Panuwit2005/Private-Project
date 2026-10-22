@@ -1,7 +1,7 @@
 // PDF & document tools: images → PDF, merge PDFs, extract/rotate pages, Markdown preview, CSV ⇄ JSON.
 
 tool({
-  id: "img-pdf", cat: "PDF & เอกสาร", icon: I.pdf, name: "รูปภาพ → PDF",
+  id: "img-pdf", cat: "docs", icon: I.pdf, name: "รูปภาพ → PDF",
   desc: "รวมรูปหลายรูปเป็นไฟล์ PDF เดียว เรียงตามลำดับที่เลือก เหมาะกับสแกนเอกสาร",
   keywords: "pdf image jpg รวม เอกสาร scan สแกน",
   render(body) {
@@ -50,7 +50,7 @@ tool({
 });
 
 tool({
-  id: "pdf-merge", cat: "PDF & เอกสาร", icon: I.merge, name: "รวมไฟล์ PDF",
+  id: "pdf-merge", cat: "docs", icon: I.merge, name: "รวมไฟล์ PDF",
   desc: "รวม PDF หลายไฟล์เป็นไฟล์เดียว จัดลำดับได้ตามต้องการ",
   keywords: "merge pdf combine รวม pdf",
   render(body) {
@@ -98,7 +98,7 @@ function parseRanges(str, total) {
 }
 
 tool({
-  id: "pdf-pages", cat: "PDF & เอกสาร", icon: I.split, name: "แยก / หมุนหน้า PDF",
+  id: "pdf-pages", cat: "docs", icon: I.split, name: "แยก / หมุนหน้า PDF",
   desc: "ดึงเฉพาะหน้าที่ต้องการ ลบหน้า แยกทุกหน้าเป็นไฟล์ หรือหมุนหน้า PDF",
   keywords: "split pdf extract pages rotate แยก หมุน ลบหน้า",
   render(body) {
@@ -138,7 +138,7 @@ tool({
 });
 
 tool({
-  id: "markdown", cat: "PDF & เอกสาร", icon: I.md, name: "Markdown Preview",
+  id: "markdown", cat: "docs", icon: I.md, name: "Markdown Preview",
   desc: "เขียน Markdown แล้วดูผลลัพธ์ทันที คัดลอกเป็น HTML หรือพิมพ์เป็น PDF ได้",
   keywords: "markdown md preview html เขียน",
   render(body) {
@@ -185,7 +185,7 @@ function parseCSV(text, sep) {
 }
 
 tool({
-  id: "csv-json", cat: "PDF & เอกสาร", icon: I.table, name: "CSV ⇄ JSON",
+  id: "csv-json", cat: "docs", icon: I.table, name: "CSV ⇄ JSON",
   desc: "แปลงตาราง CSV (จาก Excel/Sheets) เป็น JSON และแปลง JSON กลับเป็น CSV",
   keywords: "csv json excel sheets table ตาราง convert",
   render(body) {
@@ -215,6 +215,115 @@ tool({
       const isJson = /^\s*[\[{]/.test(t.value);
       // BOM so Excel opens Thai text correctly
       download(new Blob([isJson ? t.value : "﻿" + t.value], { type: isJson ? "application/json" : "text/csv" }), isJson ? "data.json" : "data.csv");
+    };
+  },
+});
+
+tool({
+  id: "pdf-image", cat: "docs", icon: I.image, name: "PDF → รูปภาพ",
+  desc: "แปลงหน้า PDF เป็นรูป PNG/JPG ความละเอียดสูง เลือกหน้าได้ เหมาะสำหรับโพสต์หรือแนบในแชต",
+  keywords: "pdf to image png jpg แปลง pdf เป็นรูป",
+  render(body) {
+    let doc, file;
+    const ui = h(`<div hidden><div class="status" id="info"></div>
+      <div class="row"><div class="field"><label>หน้าที่ต้องการ (เช่น 1-3, 5)</label><input class="input" id="r" placeholder="ทั้งหมด"></div>
+      <div class="field"><label>ความละเอียด</label><select class="input" id="sc"><option value="1.5">ปกติ (~110 dpi)</option><option value="2" selected>คมชัด (~150 dpi)</option><option value="3">สูง (~220 dpi)</option></select></div>
+      <div class="field"><label>รูปแบบ</label><select class="input" id="fm"><option value="png">PNG</option><option value="jpeg">JPG</option></select></div></div>
+      <div class="actions"><button class="btn btn-gold" id="go">แปลงเป็นรูป</button></div><div class="progress"><div id="bar"></div></div><div class="status" id="st"></div><div class="out" id="out"></div></div>`);
+    body.append(dropZone({ accept: "application/pdf", title: "เลือกไฟล์ PDF", hint: "ประมวลผลในเครื่องของคุณ" }, async ([f]) => {
+      try {
+        await loadScript(LIB.pdfjs);
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
+        file = f; doc = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
+        ui.hidden = false; setStatus($("#info", ui), `${f.name} · ${doc.numPages} หน้า`);
+      } catch (e) { ui.hidden = false; setStatus($("#info", ui), "เปิด PDF ไม่ได้: " + e.message, true); }
+    }), ui);
+    $("#go", ui).onclick = async () => {
+      const st = $("#st", ui), out = $("#out", ui), bar = $("#bar", ui);
+      try {
+        const pages = $("#r", ui).value.trim() ? parseRanges($("#r", ui).value, doc.numPages) : [...Array(doc.numPages).keys()];
+        const sc = +$("#sc", ui).value, fm = $("#fm", ui).value; out.innerHTML = "";
+        for (const [k, i] of pages.entries()) {
+          const page = await doc.getPage(i + 1), vp = page.getViewport({ scale: sc });
+          const c = document.createElement("canvas"); c.width = vp.width; c.height = vp.height;
+          const ctx = c.getContext("2d"); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height);
+          await page.render({ canvasContext: ctx, viewport: vp }).promise;
+          const blob = await canvasBlob(c, "image/" + fm, .92), name = `${baseName(file.name)}_p${i + 1}.${fm === "jpeg" ? "jpg" : "png"}`;
+          const row = h(`<div class="file-item"><img src="${URL.createObjectURL(blob)}" alt=""><div class="meta"><b>${esc(name)}</b><small>${c.width}×${c.height} · ${fmtSize(blob.size)}</small></div><button class="btn btn-ghost btn-sm">บันทึก</button></div>`);
+          $("button", row).onclick = () => download(blob, name); out.append(row);
+          bar.style.width = (k + 1) / pages.length * 100 + "%"; setStatus(st, `แปลงแล้ว ${k + 1}/${pages.length} หน้า`);
+        }
+      } catch (e) { setStatus(st, e.message, true); }
+    };
+  },
+});
+
+tool({
+  id: "signature", cat: "docs", icon: I.sign, name: "เซ็นชื่อดิจิทัล",
+  desc: "เซ็นชื่อด้วยนิ้วหรือเมาส์ แล้วบันทึกเป็น PNG พื้นใส สำหรับแปะลงเอกสารหรือ PDF",
+  keywords: "signature ลายเซ็น เซ็นชื่อ sign png โปร่งใส",
+  render(body) {
+    const ui = h(`<div><canvas class="sig-pad" id="cv" aria-label="พื้นที่เซ็นชื่อ"></canvas>
+      <div class="row"><div class="field" style="flex:0 0 90px"><label>สีหมึก</label><input type="color" id="col" value="#1a237e"></div><div class="field"><label>ความหนา</label><input type="range" id="w" min="1" max="8" value="3"></div></div>
+      <div class="actions"><button class="btn btn-gold" id="save">บันทึก PNG (พื้นใส)</button><button class="btn btn-ghost" id="undo">ย้อนกลับ</button><button class="btn btn-ghost" id="clr">ล้าง</button></div></div>`);
+    body.append(ui);
+    const cv = $("#cv", ui), ctx = cv.getContext("2d"), strokes = [];
+    const fit = () => { const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); redraw(); };
+    const redraw = () => {
+      ctx.clearRect(0, 0, cv.width, cv.height); ctx.lineCap = ctx.lineJoin = "round";
+      for (const s of strokes) { ctx.strokeStyle = s.c; ctx.lineWidth = s.w; ctx.beginPath(); s.p.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); }
+    };
+    let cur;
+    const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    cv.onpointerdown = e => { cv.setPointerCapture(e.pointerId); cur = { c: $("#col", ui).value, w: +$("#w", ui).value * (e.pressure && e.pointerType === "pen" ? .5 + e.pressure : 1), p: [pt(e)] }; strokes.push(cur); };
+    cv.onpointermove = e => { if (!cur) return; cur.p.push(pt(e)); redraw(); };
+    cv.onpointerup = cv.onpointercancel = () => cur = null;
+    $("#undo", ui).onclick = () => { strokes.pop(); redraw(); };
+    $("#clr", ui).onclick = () => { strokes.length = 0; redraw(); };
+    $("#save", ui).onclick = async () => {
+      if (!strokes.length) return toast("ยังไม่ได้เซ็น");
+      // Crop to the signature's bounding box with a small margin.
+      const all = strokes.flatMap(s => s.p), d = devicePixelRatio || 1, m = 12;
+      const x0 = Math.max(0, Math.min(...all.map(p => p[0])) - m), y0 = Math.max(0, Math.min(...all.map(p => p[1])) - m);
+      const x1 = Math.max(...all.map(p => p[0])) + m, y1 = Math.max(...all.map(p => p[1])) + m;
+      const o = document.createElement("canvas"); o.width = (x1 - x0) * d; o.height = (y1 - y0) * d;
+      o.getContext("2d").drawImage(cv, x0 * d, y0 * d, o.width, o.height, 0, 0, o.width, o.height);
+      download(await canvasBlob(o), "signature.png");
+    };
+    requestAnimationFrame(fit); addEventListener("resize", fit);
+    return () => removeEventListener("resize", fit);
+  },
+});
+
+tool({
+  id: "pdf-number", cat: "docs", icon: I.pages, name: "ใส่เลขหน้า PDF",
+  desc: "เพิ่มเลขหน้าให้ทุกหน้าของ PDF เลือกตำแหน่ง รูปแบบ (1, 1/10, หน้า 1) และเลขเริ่มต้นได้",
+  keywords: "pdf page number เลขหน้า ใส่เลขหน้า",
+  render(body) {
+    let file;
+    const ui = h(`<div hidden><div class="status" id="info"></div>
+      <div class="row"><div class="field"><label>ตำแหน่ง</label><select class="input" id="pos"><option value="bc">ล่างกลาง</option><option value="br">ล่างขวา</option><option value="tr">บนขวา</option></select></div>
+      <div class="field"><label>รูปแบบ</label><select class="input" id="fmt"><option value="n">1</option><option value="nt">1 / 10</option><option value="p">Page 1</option></select></div>
+      <div class="field"><label>เริ่มนับจาก</label><input class="input" type="number" id="s" value="1"></div><div class="field"><label>ข้ามหน้าแรก (ปก)</label><select class="input" id="skip"><option value="0">ไม่ข้าม</option><option value="1">ข้าม</option></select></div></div>
+      <div class="actions"><button class="btn btn-gold" id="go">ใส่เลขหน้าและบันทึก</button></div><div class="status" id="st"></div></div>`);
+    body.append(dropZone({ accept: "application/pdf", title: "เลือกไฟล์ PDF", hint: "ประมวลผลในเครื่องของคุณ" }, ([f]) => { file = f; ui.hidden = false; setStatus($("#info", ui), f.name); }), ui);
+    $("#go", ui).onclick = async () => {
+      const st = $("#st", ui);
+      try {
+        await loadScript(LIB.pdflib);
+        const doc = await PDFLib.PDFDocument.load(await file.arrayBuffer(), { ignoreEncryption: true });
+        const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica), pages = doc.getPages();
+        const skip = +$("#skip", ui).value, start = num($("#s", ui).value), pos = $("#pos", ui).value, fmt = $("#fmt", ui).value, total = pages.length - skip + start - 1;
+        pages.forEach((p, i) => {
+          if (i < skip) return;
+          const n = i - skip + start, label = fmt === "nt" ? `${n} / ${total}` : fmt === "p" ? `Page ${n}` : String(n);
+          const { width, height } = p.getSize(), size = 10, tw = font.widthOfTextAtSize(label, size), m = 28;
+          const x = pos === "bc" ? (width - tw) / 2 : width - m - tw, y = pos === "tr" ? height - m : m - 6;
+          p.drawText(label, { x, y, size, font, color: PDFLib.rgb(.25, .25, .25) });
+        });
+        download(new Blob([await doc.save()], { type: "application/pdf" }), baseName(file.name) + "_numbered.pdf");
+        setStatus(st, `เสร็จแล้ว ✓ ${pages.length - skip} หน้า`);
+      } catch (e) { setStatus(st, "ทำไม่สำเร็จ: " + e.message, true); }
     };
   },
 });

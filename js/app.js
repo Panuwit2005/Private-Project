@@ -45,6 +45,7 @@ const LIB = {
   pdflib: "vendor/pdf-lib.min.js",
   jsqr: "vendor/jsQR.js",
   marked: "vendor/marked.min.js",
+  pdfjs: "vendor/pdf.min.js",
 };
 const loaded = {};
 function loadScript(src) {
@@ -131,12 +132,49 @@ const I = {
   scan: icon('<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/>'),
   palette: icon('<path d="M12 22a10 10 0 1 1 10-10c0 3-2.5 4-4.5 4H15a2 2 0 0 0-1.5 3.3A2 2 0 0 1 12 22z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="16.5" cy="10.5" r="1"/>'),
   calendar: icon('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
+  clapper: icon('<path d="M4 11v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8H4z"/><path d="m4 11-.9-3.5a2 2 0 0 1 1.4-2.4l11.6-3a2 2 0 0 1 2.4 1.4L19.4 7 4 11zM6.2 6.2l3.1 3.9M12.4 4.6l3.1 3.9"/>'),
+  trend: icon('<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/><path d="M15 7h5v5"/>'),
+  scroll: icon('<path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M10 8h6M10 12h6"/>'),
+  captions: icon('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M7 15h4M15 15h2M7 11h2M13 11h4"/>'),
+  thumb: icon('<rect x="2" y="4" width="20" height="14" rx="2"/><path d="M6 14l3-3 2 2 4-4 3 3"/><path d="M8 21h8"/>'),
+  ratio: icon('<rect x="3" y="6" width="18" height="12" rx="2"/><rect x="9" y="3" width="6" height="18" rx="1.5"/>'),
+  hashtag: icon('<path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/>'),
+  board: icon('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h6M9 13h6M15 7h6"/>'),
+  pie: icon('<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>'),
+  avg: icon('<path d="M3 17l6-6 4 4 8-8"/><path d="M3 21h18"/><circle cx="9" cy="11" r="1.5"/><circle cx="13" cy="15" r="1.5"/>'),
+  coins: icon('<circle cx="8" cy="8" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.3 18"/><path d="M7 6h1v4M16.7 13.9l.7.7-2.8 2.8"/>'),
+  target: icon('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
+  scale: icon('<path d="M12 3v18M7 21h10M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM5 7h14M12 3l-7 4M12 3l7 4"/>'),
+  growth: icon('<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>'),
+  gem: icon('<path d="M6 3h12l4 6-10 12L2 9z"/><path d="M11 3 8 9l4 12 4-12-3-6M2 9h20"/>'),
+  sign: icon('<path d="M20 19H4M15.5 4.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/>'),
+  grid: icon('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'),
+  bolt: icon('<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>'),
+  fuel: icon('<path d="M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 4 0V9.8a2 2 0 0 0-.6-1.4L18 5"/>'),
+  school: icon('<path d="M22 10 12 5 2 10l10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>'),
+  team: icon('<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 21v-1a6 6 0 0 1 12 0v1M15 21v-1a4 4 0 0 1 6-3.5"/>'),
+  base: icon('<path d="M4 7h3v10H4M17 7h3v10h-3M10 17l4-10"/>'),
+  pages: icon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M10 17h4"/>'),
   star: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2l3 7 7 .5-5.5 4.5 2 7L12 17l-6.5 4 2-7L2 9.5 9 9z"/></svg>',
 };
 
 // ---------- Registry ----------
-// Categories in display order.
-const CATS = ["รูปภาพ", "เสียง & วิดีโอ", "PDF & เอกสาร", "ข้อความ", "นักพัฒนา", "คำนวณ", "ประจำวัน"];
+// Categories in display order. To add a category: add an entry here, create js/tools/<id>.js,
+// list that file in index.html and sw.js, then register tools with cat: "<id>".
+const CATS = [
+  { id: "creator", name: "ช่วยทำคลิป", icon: I.clapper, desc: "สคริปต์ เทเลพรอมป์เตอร์ ซับไตเติล ภาพปก และวางแผนคอนเทนต์" },
+  { id: "invest", name: "พอร์ตหุ้น & ลงทุน", icon: I.trend, desc: "ติดตามพอร์ต ถัวเฉลี่ย ปันผล ค่าธรรมเนียม และขนาดสถานะ" },
+  { id: "image", name: "รูปภาพ", icon: I.image, desc: "แปลง บีบอัด ครอป ลายน้ำ และจัดการรูปภาพ" },
+  { id: "media", name: "เสียง & วิดีโอ", icon: I.music, desc: "แปลงเสียง ตัดเสียง อัดเสียง/หน้าจอ และเสียงพูด" },
+  { id: "docs", name: "PDF & เอกสาร", icon: I.pdf, desc: "สร้าง รวม แยก และแก้ไข PDF รวมถึงเอกสารอื่น ๆ" },
+  { id: "text", name: "ข้อความ", icon: I.text, desc: "นับคำ แก้พิมพ์ผิดภาษา คำอ่านบาท และจัดการข้อความ" },
+  { id: "calc", name: "คำนวณ", icon: I.calc, desc: "เงิน ภาษี สุขภาพ วันที่ หน่วย และเครื่องคิดเลข" },
+  { id: "daily", name: "ประจำวัน", icon: I.check, desc: "โน้ต งาน ตั้งเวลา สุ่ม QR และเครื่องมือใช้ทุกวัน" },
+  { id: "dev", name: "นักพัฒนา", icon: I.code, desc: "JSON, Base64, Hash, Regex และเครื่องมือโปรแกรมเมอร์" },
+];
+const catById = (id) => CATS.find(c => c.id === id);
 const TOOLS = [];
+// def: { id, cat, also?: [extra category ids], icon, name, desc, keywords, render(body) }
 // render(body) builds the UI; it may return a cleanup function called when the tool closes.
 function tool(def) { TOOLS.push(def); }
+const inCat = (t, id) => t.cat === id || (t.also || []).includes(id);

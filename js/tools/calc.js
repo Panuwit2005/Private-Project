@@ -22,7 +22,7 @@ function evaluate(expr) {
 const nice = (v) => Number.isFinite(v) ? (+v.toPrecision(12)).toLocaleString("en-US", { maximumFractionDigits: 10 }) : "Error";
 
 tool({
-  id: "calculator", cat: "คำนวณ", icon: I.calc, name: "เครื่องคิดเลข",
+  id: "calculator", cat: "calc", icon: I.calc, name: "เครื่องคิดเลข",
   desc: "เครื่องคิดเลขพร้อมวงเล็บ ยกกำลัง รากที่สอง เปอร์เซ็นต์ และประวัติการคำนวณ ใช้คีย์บอร์ดได้",
   keywords: "calculator คิดเลข คำนวณ บวก ลบ คูณ หาร",
   render(body) {
@@ -58,7 +58,7 @@ tool({
 });
 
 tool({
-  id: "percent", cat: "คำนวณ", icon: I.percent, name: "คำนวณเปอร์เซ็นต์",
+  id: "percent", cat: "calc", icon: I.percent, name: "คำนวณเปอร์เซ็นต์",
   desc: "หา X% ของจำนวน, A เป็นกี่ % ของ B, และเพิ่ม/ลดลงกี่เปอร์เซ็นต์",
   keywords: "percent เปอร์เซ็นต์ ร้อยละ เพิ่มขึ้น ลดลง",
   render(body) {
@@ -79,7 +79,7 @@ tool({
 });
 
 tool({
-  id: "vat", cat: "คำนวณ", icon: I.receipt, name: "VAT 7% & ส่วนลด",
+  id: "vat", cat: "calc", icon: I.receipt, name: "VAT 7% & ส่วนลด",
   desc: "คำนวณภาษีมูลค่าเพิ่ม (รวม/แยก VAT), หัก ณ ที่จ่าย และราคาหลังหักส่วนลด",
   keywords: "vat 7% ภาษีมูลค่าเพิ่ม ส่วนลด discount หัก ณ ที่จ่าย withholding",
   render(body) {
@@ -101,7 +101,7 @@ tool({
 });
 
 tool({
-  id: "loan", cat: "คำนวณ", icon: I.bank, name: "คำนวณค่างวด / ผ่อน",
+  id: "loan", cat: "calc", also: ["invest"], icon: I.bank, name: "คำนวณค่างวด / ผ่อน",
   desc: "คำนวณค่างวดรถ บ้าน หรือสินเชื่อ ทั้งแบบดอกเบี้ยคงที่ (Flat rate) และลดต้นลดดอก",
   keywords: "loan installment ผ่อน ค่างวด ดอกเบี้ย รถ บ้าน สินเชื่อ flat rate",
   render(body) {
@@ -122,7 +122,7 @@ tool({
 });
 
 tool({
-  id: "savings", cat: "คำนวณ", icon: I.bank, name: "ดอกเบี้ยทบต้น / ออมเงิน",
+  id: "savings", cat: "calc", also: ["invest"], icon: I.bank, name: "ดอกเบี้ยทบต้น / ออมเงิน",
   desc: "คำนวณเงินออมรายเดือนพร้อมดอกเบี้ยทบต้น ดูว่าเงินจะงอกเงยเท่าไรในอนาคต",
   keywords: "compound interest savings ออมเงิน ดอกเบี้ยทบต้น ลงทุน dca",
   render(body) {
@@ -142,7 +142,7 @@ tool({
 });
 
 tool({
-  id: "income-tax", cat: "คำนวณ", icon: I.receipt, name: "ภาษีเงินได้บุคคลธรรมดา",
+  id: "income-tax", cat: "calc", icon: I.receipt, name: "ภาษีเงินได้บุคคลธรรมดา",
   desc: "ประมาณการภาษีเงินได้จากเงินเดือนตามอัตราขั้นบันได หักค่าใช้จ่ายและค่าลดหย่อนพื้นฐาน",
   keywords: "income tax ภาษี เงินได้ ภงด 91 ลดหย่อน เงินเดือน",
   render(body) {
@@ -166,7 +166,7 @@ tool({
 });
 
 tool({
-  id: "bmi", cat: "คำนวณ", icon: I.heart, name: "BMI & แคลอรี่",
+  id: "bmi", cat: "calc", icon: I.heart, name: "BMI & แคลอรี่",
   desc: "คำนวณดัชนีมวลกาย (BMI เกณฑ์คนเอเชีย) และพลังงานที่ร่างกายต้องการต่อวัน (BMR/TDEE)",
   keywords: "bmi bmr tdee calories น้ำหนัก ส่วนสูง แคลอรี่ ลดน้ำหนัก สุขภาพ",
   render(body) {
@@ -189,7 +189,7 @@ tool({
 });
 
 tool({
-  id: "date-calc", cat: "คำนวณ", icon: I.cake, name: "คำนวณอายุ & วันที่",
+  id: "date-calc", cat: "calc", icon: I.cake, name: "คำนวณอายุ & วันที่",
   desc: "คำนวณอายุแบบละเอียด นับจำนวนวันระหว่างสองวัน และบวก/ลบวันจากวันที่ที่กำหนด",
   keywords: "age date difference อายุ นับวัน ระยะเวลา วันเกิด countdown",
   render(body) {
@@ -218,7 +218,7 @@ tool({
 });
 
 tool({
-  id: "split-bill", cat: "คำนวณ", icon: I.users, name: "หารค่าอาหาร",
+  id: "split-bill", cat: "calc", icon: I.users, name: "หารค่าอาหาร",
   desc: "หารบิลกับเพื่อน รวมเซอร์วิสชาร์จ 10% VAT 7% และทิป ปัดเศษให้อัตโนมัติ",
   keywords: "split bill หารค่าอาหาร service charge tip ทิป เพื่อน",
   render(body) {
@@ -239,7 +239,7 @@ tool({
 });
 
 tool({
-  id: "units", cat: "คำนวณ", icon: I.ruler, name: "แปลงหน่วย",
+  id: "units", cat: "calc", icon: I.ruler, name: "แปลงหน่วย",
   desc: "แปลงหน่วยความยาว พื้นที่ (ไร่ งาน ตร.วา) น้ำหนัก อุณหภูมิ ปริมาตร ความเร็ว และขนาดข้อมูล",
   keywords: "unit convert length weight temperature หน่วย กิโล เมตร ไร่ ตารางวา",
   render(body) {
@@ -272,5 +272,110 @@ tool({
     ["v", "a", "b"].forEach(id => $("#" + id, ui).oninput = calc);
     $("#sw", ui).onclick = () => { const a = $("#a", ui).selectedIndex; $("#a", ui).selectedIndex = $("#b", ui).selectedIndex; $("#b", ui).selectedIndex = a; calc(); };
     fill();
+  },
+});
+
+tool({
+  id: "electric", cat: "calc", icon: I.bolt, name: "ค่าไฟเครื่องใช้ไฟฟ้า",
+  desc: "คำนวณหน่วยไฟและค่าไฟของเครื่องใช้ไฟฟ้าแต่ละชิ้นต่อวัน/เดือน/ปี จากกำลังวัตต์และชั่วโมงใช้งาน",
+  keywords: "ค่าไฟ electricity kwh หน่วย วัตต์ แอร์ ตู้เย็น",
+  render(body) {
+    let rows = store.get("electric", [{ n: "แอร์ 12000 BTU", w: 1000, hr: 8 }, { n: "ตู้เย็น", w: 120, hr: 24 }, { n: "ทีวี", w: 100, hr: 4 }]);
+    const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>ค่าไฟเฉลี่ยต่อหน่วย (บาท, รวม Ft และ VAT)</label><input class="input" id="rate" inputmode="decimal" value="${store.get("electric-rate", 4.5)}"></div></div>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>เครื่องใช้ไฟฟ้า</th><th>วัตต์</th><th>ชม./วัน</th><th>หน่วย/เดือน</th><th>บาท/เดือน</th><th></th></tr></thead><tbody id="tb"></tbody><tfoot id="tf"></tfoot></table></div>
+      <div class="actions"><button class="btn btn-ghost btn-sm" id="add">+ เพิ่มเครื่องใช้ไฟฟ้า</button></div>
+      <p class="hint">ค่าไฟต่อหน่วยจริงเป็นอัตราก้าวหน้าและมีค่า Ft ที่เปลี่ยนตามงวด ดูอัตราเฉลี่ยได้จากบิลค่าไฟ (ยอดเงิน ÷ จำนวนหน่วย) · แอร์อินเวอร์เตอร์ใช้ไฟจริงต่ำกว่าวัตต์บนฉลาก</p></div>`);
+    body.append(ui);
+    const tb = $("#tb", ui);
+    const draw = () => { tb.innerHTML = rows.map((r, i) => `<tr data-i="${i}"><td><input class="input sym" style="width:150px;text-transform:none" data-k="n" value="${esc(r.n)}"></td><td><input class="input" data-k="w" inputmode="decimal" value="${r.w}" style="width:80px"></td><td><input class="input" data-k="hr" inputmode="decimal" value="${r.hr}" style="width:70px"></td><td data-o="u"></td><td data-o="b"></td><td><button class="rm" data-rm="${i}" aria-label="ลบ">✕</button></td></tr>`).join(""); calc(); };
+    const calc = () => {
+      const rate = num($("#rate", ui).value); let U = 0;
+      rows.forEach((r, i) => { const u = num(r.w) * num(r.hr) * 30 / 1000; U += u; $('[data-o="u"]', tb.children[i]).textContent = u.toFixed(1); $('[data-o="b"]', tb.children[i]).textContent = money(u * rate); });
+      $("#tf", ui).innerHTML = `<tr><td>รวม</td><td></td><td></td><td>${U.toFixed(1)}</td><td>${money(U * rate)}</td><td></td></tr><tr><td>ต่อปี</td><td></td><td></td><td>${(U * 12).toFixed(0)}</td><td>${money(U * rate * 12, 0)}</td><td></td></tr>`;
+      store.set("electric", rows); store.set("electric-rate", rate);
+    };
+    tb.oninput = e => { const inp = e.target.closest("[data-k]"); if (inp) { rows[+inp.closest("tr").dataset.i][inp.dataset.k] = inp.value; calc(); } };
+    tb.onclick = e => { const b = e.target.closest("[data-rm]"); if (b) { rows.splice(+b.dataset.rm, 1); draw(); } };
+    $("#add", ui).onclick = () => { rows.push({ n: "", w: 0, hr: 0 }); draw(); };
+    $("#rate", ui).oninput = calc;
+    draw();
+  },
+});
+
+tool({
+  id: "fuel", cat: "calc", icon: I.fuel, name: "ค่าน้ำมัน / ค่าเดินทาง",
+  desc: "คำนวณค่าน้ำมันต่อทริปจากระยะทาง อัตราสิ้นเปลือง และราคาน้ำมัน รวมค่าทางด่วน หารต่อคนได้",
+  keywords: "fuel น้ำมัน ค่าเดินทาง ทริป กม./ลิตร หารค่าน้ำมัน",
+  render(body) {
+    const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>ระยะทาง (กม.)</label><input class="input" id="d" inputmode="decimal" value="250"></div><div class="field"><label>อัตราสิ้นเปลือง (กม./ลิตร)</label><input class="input" id="e" inputmode="decimal" value="14"></div><div class="field"><label>ราคาน้ำมัน (บาท/ลิตร)</label><input class="input" id="p" inputmode="decimal" value="35"></div></div>
+      <div class="row"><div class="field"><label>ค่าทางด่วน/ที่จอด (บาท)</label><input class="input" id="t" inputmode="decimal" value="120"></div><div class="field"><label>จำนวนคน</label><input class="input" id="n" inputmode="numeric" value="3"></div><div class="field" style="flex:0 0 auto"><label class="check"><input type="checkbox" id="rt" checked> ไป-กลับ</label></div></div>
+      <div class="stat-grid" id="out"></div></div>`);
+    body.append(ui);
+    const run = () => {
+      const d = num($("#d", ui).value) * ($("#rt", ui).checked ? 2 : 1), e = num($("#e", ui).value), p = num($("#p", ui).value), t = num($("#t", ui).value), n = Math.max(1, num($("#n", ui).value));
+      const L = e ? d / e : 0, fuel = L * p, tot = fuel + t;
+      $("#out", ui).innerHTML = [["ระยะทางรวม", d.toLocaleString() + " กม."], ["ใช้น้ำมัน", L.toFixed(1) + " ลิตร"], ["ค่าน้ำมัน", money(fuel)], ["รวมทั้งหมด", money(tot)], ["หารต่อคน", money(tot / n)], ["ต่อกิโลเมตร", d ? money(tot / d) : "–"]].map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("");
+    };
+    $$("input", ui).forEach(i => i.oninput = run); run();
+  },
+});
+
+tool({
+  id: "gpa", cat: "calc", icon: I.school, name: "คำนวณเกรดเฉลี่ย (GPA)",
+  desc: "ใส่รายวิชา หน่วยกิต และเกรด (A–F หรือ 4.0–0) คำนวณ GPA และหาเกรดที่ต้องได้เพื่อถึงเป้า",
+  keywords: "gpa gpax เกรดเฉลี่ย หน่วยกิต เกรด",
+  render(body) {
+    const G = { "A": 4, "B+": 3.5, "B": 3, "C+": 2.5, "C": 2, "D+": 1.5, "D": 1, "F": 0 };
+    let rows = store.get("gpa", [{ n: "คณิตศาสตร์", c: 3, g: "A" }, { n: "ภาษาอังกฤษ", c: 3, g: "B+" }, { n: "ฟิสิกส์", c: 2, g: "B" }]);
+    const ui = h(`<div><div class="table-wrap"><table class="data-table"><thead><tr><th>วิชา</th><th>หน่วยกิต</th><th>เกรด</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="actions"><button class="btn btn-ghost btn-sm" id="add">+ เพิ่มวิชา</button></div>
+      <div class="result center"><small style="color:var(--color-text-muted)">เกรดเฉลี่ย</small><div class="big sm" id="gpa"></div><span id="cr" style="color:var(--color-text-muted)"></span></div>
+      <h3 style="margin-top:22px;font-size:1.05rem">ต้องได้เกรดเฉลี่ยเท่าไรในเทอมหน้า</h3>
+      <div class="row"><div class="field"><label>GPAX เป้าหมาย</label><input class="input" id="tg" inputmode="decimal" value="3.5"></div><div class="field"><label>หน่วยกิตเทอมหน้า</label><input class="input" id="nc" inputmode="decimal" value="18"></div></div><div class="result" id="need"></div></div>`);
+    body.append(ui);
+    const tb = $("#tb", ui);
+    const gv = (g) => (g in G ? G[g] : num(g));
+    const draw = () => { tb.innerHTML = rows.map((r, i) => `<tr data-i="${i}"><td><input class="input sym" style="width:150px;text-transform:none" data-k="n" value="${esc(r.n)}"></td><td><input class="input" data-k="c" inputmode="decimal" value="${r.c}" style="width:70px"></td><td><select class="input" data-k="g" style="width:90px">${Object.keys(G).map(k => `<option${k === r.g ? " selected" : ""}>${k}</option>`).join("")}</select></td><td><button class="rm" data-rm="${i}" aria-label="ลบ">✕</button></td></tr>`).join(""); calc(); };
+    const calc = () => {
+      const C = rows.reduce((s, r) => s + num(r.c), 0), P = rows.reduce((s, r) => s + num(r.c) * gv(r.g), 0), gpa = C ? P / C : 0;
+      $("#gpa", ui).textContent = gpa.toFixed(2); $("#cr", ui).textContent = `${C} หน่วยกิต`;
+      const tg = num($("#tg", ui).value), nc = num($("#nc", ui).value), need = nc ? (tg * (C + nc) - P) / nc : NaN;
+      $("#need", ui).innerHTML = !isFinite(need) ? "ใส่หน่วยกิตเทอมหน้า" : need > 4 ? `ต้องได้เฉลี่ย ${need.toFixed(2)} ซึ่งเกิน 4.00 — เป้านี้ยังไปไม่ถึงในเทอมเดียว` : need <= 0 ? "ถึงเป้าแล้ว ✓" : `ต้องได้เกรดเฉลี่ยเทอมหน้าอย่างน้อย <b>${need.toFixed(2)}</b>`;
+      store.set("gpa", rows);
+    };
+    tb.oninput = tb.onchange = e => { const inp = e.target.closest("[data-k]"); if (inp) { rows[+inp.closest("tr").dataset.i][inp.dataset.k] = inp.value; calc(); } };
+    tb.onclick = e => { const b = e.target.closest("[data-rm]"); if (b) { rows.splice(+b.dataset.rm, 1); draw(); } };
+    $("#add", ui).onclick = () => { rows.push({ n: "", c: 3, g: "A" }); draw(); };
+    ["tg", "nc"].forEach(id => $("#" + id, ui).oninput = calc);
+    draw();
+  },
+});
+
+tool({
+  id: "workdays", cat: "calc", icon: I.calendar, name: "นับวันทำงาน",
+  desc: "นับวันทำงานระหว่างสองวัน ไม่รวมเสาร์-อาทิตย์และวันหยุดที่คุณกำหนด และหาวันครบกำหนดหลัง N วันทำการ",
+  keywords: "working days วันทำการ นับวันทำงาน วันหยุด deadline",
+  render(body) {
+    const today = new Date().toISOString().slice(0, 10);
+    const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label>ตั้งแต่</label><input class="input" type="date" id="a" value="${today}"></div><div class="field"><label>ถึง (รวมวันนี้)</label><input class="input" type="date" id="b"></div></div>
+      <div class="actions"><label class="check"><input type="checkbox" id="sat" checked> ไม่นับวันเสาร์</label><label class="check"><input type="checkbox" id="sun" checked> ไม่นับวันอาทิตย์</label></div>
+      <div class="field" style="margin-top:12px"><label>วันหยุดเพิ่มเติม (หนึ่งวันต่อบรรทัด รูปแบบ ปปปป-ดด-วว)</label><textarea class="input" id="hol" style="min-height:80px">${store.get("holidays", "")}</textarea></div>
+      <div class="stat-grid" id="out"></div>
+      <div class="row"><div class="field"><label>นับไปอีก N วันทำการ</label><input class="input" type="number" id="n" value="15"></div><div class="field"><label>ครบกำหนดวันที่</label><input class="input" id="due" readonly></div></div></div>`);
+    body.append(ui);
+    const b0 = new Date(); b0.setDate(b0.getDate() + 30); $("#b", ui).value = b0.toISOString().slice(0, 10);
+    const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const run = () => {
+      const hol = new Set($("#hol", ui).value.split(/\s+/).filter(Boolean)); store.set("holidays", $("#hol", ui).value);
+      const isWork = (d) => !(($("#sat", ui).checked && d.getDay() === 6) || ($("#sun", ui).checked && d.getDay() === 0) || hol.has(iso(d)));
+      const a = new Date($("#a", ui).value + "T00:00"), b = new Date($("#b", ui).value + "T00:00");
+      if (!isNaN(a) && !isNaN(b) && b >= a) {
+        let w = 0, all = 0; for (let d = new Date(a); d <= b; d.setDate(d.getDate() + 1)) { all++; if (isWork(d)) w++; }
+        $("#out", ui).innerHTML = [["วันทั้งหมด", all], ["วันทำงาน", w], ["วันหยุด", all - w], ["สัปดาห์ทำงาน", (w / 5).toFixed(1)]].map(([k, v]) => `<div class="stat"><span>${k}</span><b>${v}</b></div>`).join("");
+      }
+      let n = Math.round(num($("#n", ui).value)), d = new Date(a);
+      if (!isNaN(d) && n > 0) { while (n > 0) { d.setDate(d.getDate() + 1); if (isWork(d)) n--; } $("#due", ui).value = d.toLocaleDateString("th-TH", { weekday: "short", day: "numeric", month: "long", year: "numeric" }); }
+    };
+    $$("input, textarea", ui).forEach(i => i.oninput = run); run();
   },
 });

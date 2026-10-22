@@ -1,7 +1,7 @@
 // Text tools: counter & case, wrong-keyboard fix (TH⇄EN), Thai baht text, diff, find & replace, line tools.
 
 tool({
-  id: "text", cat: "ข้อความ", icon: I.text, name: "นับคำ & แปลงข้อความ",
+  id: "text", cat: "text", icon: I.text, name: "นับคำ & แปลงข้อความ",
   desc: "นับตัวอักษร คำ (รองรับภาษาไทย) บรรทัด แปลงตัวพิมพ์ใหญ่-เล็ก ลบช่องว่างซ้ำ",
   keywords: "word count character uppercase lowercase นับคำ ตัวอักษร",
   render(body) {
@@ -42,7 +42,7 @@ const EN2TH = Object.fromEntries([...KEY_EN].map((c, i) => [c, KEY_TH[i]]));
 const TH2EN = Object.fromEntries([...KEY_TH].map((c, i) => [c, KEY_EN[i]]));
 
 tool({
-  id: "kb-fix", cat: "ข้อความ", icon: I.replace, name: "แก้พิมพ์ผิดภาษา",
+  id: "kb-fix", cat: "text", icon: I.replace, name: "แก้พิมพ์ผิดภาษา",
   desc: "ลืมเปลี่ยนภาษา? แปลง “l;ylfu” เป็น “สวัสดี” และกลับกัน ตามแป้นพิมพ์เกษมณี",
   keywords: "keyboard wrong language พิมพ์ผิดภาษา เปลี่ยนภาษา thai english kedmanee",
   render(body) {
@@ -92,7 +92,7 @@ function bahtText(input) {
 }
 
 tool({
-  id: "baht-text", cat: "ข้อความ", icon: I.baht, name: "ตัวเลข → ตัวอักษรไทย (บาท)",
+  id: "baht-text", cat: "text", icon: I.baht, name: "ตัวเลข → ตัวอักษรไทย (บาท)",
   desc: "แปลงจำนวนเงินเป็นคำอ่านภาษาไทย เช่น 1,250.50 → หนึ่งพันสองร้อยห้าสิบบาทห้าสิบสตางค์ สำหรับใบเสร็จ/เช็ค",
   keywords: "baht text บาทถ้วน จำนวนเงิน ตัวหนังสือ เช็ค ใบเสร็จ bahttext",
   render(body) {
@@ -127,7 +127,7 @@ function lineDiff(a, b) {
 }
 
 tool({
-  id: "diff", cat: "ข้อความ", icon: I.diff, name: "เปรียบเทียบข้อความ",
+  id: "diff", cat: "text", icon: I.diff, name: "เปรียบเทียบข้อความ",
   desc: "หาความแตกต่างระหว่างข้อความ 2 ชุดทีละบรรทัด ไฮไลต์ส่วนที่เพิ่มและลบ",
   keywords: "diff compare เปรียบเทียบ ความแตกต่าง text",
   render(body) {
@@ -147,7 +147,7 @@ tool({
 });
 
 tool({
-  id: "find-replace", cat: "ข้อความ", icon: I.replace, name: "ค้นหา & แทนที่",
+  id: "find-replace", cat: "text", icon: I.replace, name: "ค้นหา & แทนที่",
   desc: "ค้นหาและแทนที่ข้อความทั้งหมดในคลิกเดียว รองรับ Regex และไม่สนตัวพิมพ์เล็ก-ใหญ่",
   keywords: "find replace ค้นหา แทนที่ regex",
   render(body) {
@@ -171,7 +171,7 @@ tool({
 });
 
 tool({
-  id: "lines", cat: "ข้อความ", icon: I.list, name: "จัดการรายการ (บรรทัด)",
+  id: "lines", cat: "text", icon: I.list, name: "จัดการรายการ (บรรทัด)",
   desc: "เรียงลำดับ ลบบรรทัดซ้ำ ลบบรรทัดว่าง สลับ สุ่ม ใส่เลขลำดับ ให้รายการยาว ๆ",
   keywords: "sort lines dedupe unique shuffle เรียง ลบซ้ำ รายการ",
   render(body) {

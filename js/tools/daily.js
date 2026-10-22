@@ -2,7 +2,7 @@
 // QR generator/scanner, password generator. Notes, to-dos and counters persist in localStorage.
 
 tool({
-  id: "notes", cat: "ประจำวัน", icon: I.note, name: "โน้ตส่วนตัว",
+  id: "notes", cat: "daily", icon: I.note, name: "โน้ตส่วนตัว",
   desc: "จดโน้ตหลายเล่ม บันทึกอัตโนมัติในเครื่องนี้ ค้นหาได้ และส่งออกเป็นไฟล์ .txt",
   keywords: "notes notepad จดโน้ต บันทึก memo",
   render(body) {
@@ -40,7 +40,7 @@ tool({
 });
 
 tool({
-  id: "todo", cat: "ประจำวัน", icon: I.check, name: "รายการสิ่งที่ต้องทำ",
+  id: "todo", cat: "daily", icon: I.check, name: "รายการสิ่งที่ต้องทำ",
   desc: "To-do list ส่วนตัว ติ๊กเสร็จ ลบ และเก็บไว้ในเครื่องนี้ตลอด",
   keywords: "todo to-do task checklist งาน สิ่งที่ต้องทำ",
   render(body) {
@@ -74,7 +74,7 @@ function beep() {
 }
 
 tool({
-  id: "timer", cat: "ประจำวัน", icon: I.timer, name: "ตั้งเวลา & Pomodoro",
+  id: "timer", cat: "daily", icon: I.timer, name: "ตั้งเวลา & Pomodoro",
   desc: "จับเวลาถอยหลังพร้อมเสียงเตือน และโหมด Pomodoro (โฟกัส 25 / พัก 5 นาที)",
   keywords: "timer countdown pomodoro ตั้งเวลา นับถอยหลัง โฟกัส",
   render(body) {
@@ -105,7 +105,7 @@ tool({
 });
 
 tool({
-  id: "stopwatch", cat: "ประจำวัน", icon: I.clock, name: "นาฬิกาจับเวลา",
+  id: "stopwatch", cat: "daily", icon: I.clock, name: "นาฬิกาจับเวลา",
   desc: "จับเวลาละเอียดระดับเศษวินาที พร้อมบันทึกรอบ (Lap)",
   keywords: "stopwatch จับเวลา lap รอบ วิ่ง",
   render(body) {
@@ -128,7 +128,7 @@ tool({
 });
 
 tool({
-  id: "world-clock", cat: "ประจำวัน", icon: I.globe, name: "เวลาทั่วโลก",
+  id: "world-clock", cat: "daily", icon: I.globe, name: "เวลาทั่วโลก",
   desc: "ดูเวลาปัจจุบันของเมืองสำคัญทั่วโลกเทียบกับเวลาไทย",
   keywords: "world clock timezone เวลา ประเทศ โซนเวลา",
   render(body) {
@@ -150,7 +150,7 @@ tool({
 const rnd = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
 
 tool({
-  id: "random", cat: "ประจำวัน", icon: I.dice, name: "สุ่มตัวเลข / ทอยเต๋า / โยนเหรียญ",
+  id: "random", cat: "daily", icon: I.dice, name: "สุ่มตัวเลข / ทอยเต๋า / โยนเหรียญ",
   desc: "สุ่มตัวเลขในช่วงที่กำหนด ทอยลูกเต๋า หรือโยนเหรียญหัว-ก้อย",
   keywords: "random number dice coin สุ่ม ลูกเต๋า เหรียญ หัวก้อย",
   render(body) {
@@ -176,7 +176,7 @@ tool({
 });
 
 tool({
-  id: "wheel", cat: "ประจำวัน", icon: I.wheel, name: "วงล้อสุ่ม",
+  id: "wheel", cat: "daily", icon: I.wheel, name: "วงล้อสุ่ม",
   desc: "ใส่ตัวเลือกแล้วหมุนวงล้อ ช่วยตัดสินใจ กินอะไรดี ใครจ่าย หรือจับฉลาก",
   keywords: "wheel spin picker วงล้อ สุ่ม กินอะไรดี จับฉลาก",
   render(body) {
@@ -218,7 +218,7 @@ tool({
 });
 
 tool({
-  id: "tally", cat: "ประจำวัน", icon: I.tally, name: "ตัวนับจำนวน",
+  id: "tally", cat: "daily", icon: I.tally, name: "ตัวนับจำนวน",
   desc: "กดนับจำนวน (Tally counter) หลายตัว บันทึกค่าไว้ในเครื่อง เหมาะกับนับคน นับของ นับรอบ",
   keywords: "tally counter นับ จำนวน คลิก count",
   render(body) {
@@ -239,7 +239,7 @@ tool({
 });
 
 tool({
-  id: "qr", cat: "ประจำวัน", icon: I.qr, name: "สร้าง QR Code",
+  id: "qr", cat: "daily", icon: I.qr, name: "สร้าง QR Code",
   desc: "สร้าง QR Code จากลิงก์ ข้อความ หรือ Wi-Fi (สแกนแล้วเชื่อมต่อได้ทันที) ดาวน์โหลดเป็น PNG",
   keywords: "qr code คิวอาร์ link url wifi",
   render(body) {
@@ -272,7 +272,7 @@ tool({
 });
 
 tool({
-  id: "qr-scan", cat: "ประจำวัน", icon: I.scan, name: "สแกน QR Code",
+  id: "qr-scan", cat: "daily", icon: I.scan, name: "สแกน QR Code",
   desc: "สแกน QR ด้วยกล้องมือถือหรือจากรูปภาพ แสดงลิงก์/ข้อความ คัดลอกหรือเปิดได้ทันที",
   keywords: "qr scanner scan อ่าน qr กล้อง camera barcode",
   render(body) {
@@ -320,7 +320,7 @@ tool({
 });
 
 tool({
-  id: "password", cat: "ประจำวัน", icon: I.key, name: "สร้างรหัสผ่าน",
+  id: "password", cat: "daily", icon: I.key, name: "สร้างรหัสผ่าน",
   desc: "สร้างรหัสผ่านที่แข็งแรงด้วยการสุ่มแบบเข้ารหัส กำหนดความยาวและชนิดอักขระได้",
   keywords: "password generator รหัสผ่าน random security",
   render(body) {
@@ -341,5 +341,28 @@ tool({
     $$("input", ui).forEach(i => i.oninput = gen);
     $("#gen", ui).onclick = gen; $("#cp", ui).onclick = () => copy($("#pw", ui).textContent);
     gen();
+  },
+});
+
+tool({
+  id: "teams", cat: "daily", icon: I.team, name: "สุ่มแบ่งทีม / จับคู่",
+  desc: "ใส่รายชื่อแล้วสุ่มแบ่งเป็นกลุ่มตามจำนวนทีมหรือจำนวนคนต่อทีม สุ่มลำดับเวร หรือจับคู่",
+  keywords: "random team group แบ่งทีม แบ่งกลุ่ม จับคู่ สุ่มชื่อ",
+  render(body) {
+    const ui = h(`<div><textarea class="input" id="t" style="font-family:var(--font-body)" placeholder="หนึ่งชื่อต่อบรรทัด">${store.get("teams", "เอ\nบี\nซี\nดี\nอี\nเอฟ\nจี\nเอช")}</textarea>
+      <div class="row"><div class="field"><label>แบ่งโดย</label><select class="input" id="m"><option value="teams">จำนวนทีม</option><option value="size">จำนวนคนต่อทีม</option></select></div><div class="field"><label>จำนวน</label><input class="input" type="number" id="n" value="2" min="1"></div></div>
+      <div class="actions"><button class="btn btn-gold" id="go">สุ่มแบ่งทีม</button><button class="btn btn-ghost" id="cp">คัดลอกผล</button></div>
+      <div class="team-list" id="out"></div></div>`);
+    body.append(ui);
+    let text = "";
+    $("#go", ui).onclick = () => {
+      const names = $("#t", ui).value.split("\n").map(s => s.trim()).filter(Boolean); store.set("teams", $("#t", ui).value);
+      for (let i = names.length - 1; i > 0; i--) { const j = rnd(i + 1); [names[i], names[j]] = [names[j], names[i]]; }
+      const n = Math.max(1, Math.round(num($("#n", ui).value))), k = $("#m", ui).value === "teams" ? Math.min(n, names.length) : Math.ceil(names.length / n);
+      const teams = Array.from({ length: k }, () => []); names.forEach((x, i) => teams[i % k].push(x));
+      $("#out", ui).innerHTML = teams.map((t, i) => `<div class="stat"><span>ทีม ${i + 1} · ${t.length} คน</span>${t.map(x => `<div>${esc(x)}</div>`).join("")}</div>`).join("");
+      text = teams.map((t, i) => `ทีม ${i + 1}: ${t.join(", ")}`).join("\n");
+    };
+    $("#cp", ui).onclick = () => text && copy(text);
   },
 });

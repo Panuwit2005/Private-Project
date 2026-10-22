@@ -1,28 +1,41 @@
 // Home screen: shelves (pinned / recent), category filters, search, tool modal, PWA install.
 
 const grid = $("#grid"), filters = $("#filters"), q = $("#q"), shelves = $("#shelves");
-let cat = "ทั้งหมด";
+let cat = "all";
 let pins = store.get("pins", []);
 let recent = store.get("recent", []);
 const byId = (id) => TOOLS.find(t => t.id === id);
+const countIn = (id) => TOOLS.filter(t => inCat(t, id)).length;
 
 $("#toolCount").textContent = TOOLS.length;
 
-filters.innerHTML = ["ทั้งหมด", ...CATS].map(c => `<button class="chip${c === cat ? " active" : ""}">${c}</button>`).join("");
-filters.addEventListener("click", e => {
-  const b = e.target.closest(".chip"); if (!b) return;
-  cat = b.textContent; $$(".chip", filters).forEach(x => x.classList.toggle("active", x === b)); renderGrid();
-});
+filters.innerHTML = [{ id: "all", name: "ทั้งหมด" }, ...CATS].map(c =>
+  `<button class="chip${c.id === cat ? " active" : ""}" data-cat="${c.id}">${c.icon ? `<span class="chip-ic" aria-hidden="true">${c.icon}</span>` : ""}${c.name}<span class="chip-n">${c.id === "all" ? TOOLS.length : countIn(c.id)}</span></button>`).join("");
+function setCat(id, scroll) {
+  cat = catById(id) ? id : "all";
+  $$(".chip", filters).forEach(x => x.classList.toggle("active", x.dataset.cat === cat));
+  if (!modal.classList.contains("open")) history.replaceState(null, "", cat === "all" ? location.pathname + location.search : "#c/" + cat);
+  renderGrid();
+  if (scroll) $("#tools").scrollIntoView({ behavior: "smooth" });
+}
+filters.addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) setCat(b.dataset.cat); });
 
-function card(t, i) {
+function card(t, i, showCat = true) {
   const pinned = pins.includes(t.id);
   return `<div class="tool-card glass" data-id="${t.id}" role="button" tabindex="0" style="animation-delay:${Math.min(i, 20) * 30}ms">
     <button class="star${pinned ? " on" : ""}" data-pin="${t.id}" aria-label="${pinned ? "เลิกปักหมุด" : "ปักหมุด"}">${I.star}</button>
-    <span class="cat">${t.cat}</span><span class="ic">${t.icon}</span>
+    ${showCat ? `<span class="cat">${catById(t.cat).name}</span>` : ""}<span class="ic">${t.icon}</span>
     <h3>${t.name}</h3><p>${t.desc}</p><span class="go">เปิดเครื่องมือ →</span>
   </div>`;
 }
 function mini(t) { return `<button class="mini glass" data-id="${t.id}"><span class="ic">${t.icon}</span>${t.name}</button>`; }
+function section(c, list, collapsed) {
+  const shown = collapsed ? list.slice(0, 6) : list;
+  return `<section class="cat-section" aria-labelledby="h-${c.id}">
+    <header class="cat-head"><span class="ic">${c.icon}</span><div><h2 id="h-${c.id}">${c.name} <small>${list.length} เครื่องมือ</small></h2><p>${c.desc}</p></div>
+    ${collapsed && list.length > shown.length ? `<button class="btn btn-ghost btn-sm" data-open-cat="${c.id}">ดูทั้งหมด →</button>` : ""}</header>
+    <div class="grid">${shown.map((t, i) => card(t, i, false)).join("")}</div></section>`;
+}
 
 function renderShelves() {
   const p = pins.map(byId).filter(Boolean), r = recent.map(byId).filter(Boolean).slice(0, 8);
@@ -32,13 +45,25 @@ function renderShelves() {
 }
 function renderGrid() {
   const term = q.value.trim().toLowerCase();
-  const list = TOOLS.filter(t => (cat === "ทั้งหมด" || t.cat === cat) &&
-    (!term || (t.name + t.desc + (t.keywords || "") + t.cat).toLowerCase().includes(term)));
-  $("#count").textContent = `${list.length} เครื่องมือ`;
-  grid.innerHTML = list.length ? list.map(card).join("") : `<div class="empty">ไม่พบเครื่องมือที่ตรงกับ “${esc(q.value)}”</div>`;
+  if (term) { // flat search results across every category
+    const list = TOOLS.filter(t => (cat === "all" || inCat(t, cat)) &&
+      (t.name + t.desc + (t.keywords || "") + catById(t.cat).name).toLowerCase().includes(term));
+    $("#count").textContent = `พบ ${list.length} เครื่องมือ`;
+    grid.innerHTML = list.length ? `<div class="grid">${list.map((t, i) => card(t, i)).join("")}</div>` : `<div class="empty">ไม่พบเครื่องมือที่ตรงกับ “${esc(q.value)}”</div>`;
+    return;
+  }
+  if (cat === "all") {
+    $("#count").textContent = `${TOOLS.length} เครื่องมือ ใน ${CATS.length} หมวด`;
+    grid.innerHTML = CATS.map(c => section(c, TOOLS.filter(t => inCat(t, c.id)), true)).join("");
+  } else {
+    const c = catById(cat);
+    $("#count").textContent = "";
+    grid.innerHTML = section(c, TOOLS.filter(t => inCat(t, c.id)), false);
+  }
 }
 q.addEventListener("input", renderGrid);
-renderShelves(); renderGrid();
+grid.addEventListener("click", e => { const b = e.target.closest("[data-open-cat]"); if (b) setCat(b.dataset.openCat, true); });
+renderShelves();
 
 document.addEventListener("click", e => {
   const pin = e.target.closest("[data-pin]");
@@ -81,13 +106,20 @@ function closeTool() {
   runCleanup();
   modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true"); document.body.classList.remove("lock");
   $("#panelBody").innerHTML = "";
-  history.replaceState(null, "", location.pathname + location.search);
+  history.replaceState(null, "", cat === "all" ? location.pathname + location.search : "#c/" + cat);
   renderShelves();
   lastFocus?.focus();
 }
 $$("[data-close]", modal).forEach(el => el.onclick = closeTool);
 addEventListener("keydown", e => { if (e.key === "Escape" && modal.classList.contains("open")) closeTool(); });
-if (location.hash && byId(location.hash.slice(1))) openTool(location.hash.slice(1));
+const route = location.hash.slice(1);
+if (route.startsWith("c/")) setCat(route.slice(2)); else renderGrid();
+if (byId(route)) openTool(route);
+addEventListener("hashchange", () => {
+  const r = location.hash.slice(1);
+  if (r.startsWith("c/")) { if (modal.classList.contains("open")) closeTool(); setCat(r.slice(2)); }
+  else if (byId(r) && !modal.classList.contains("open")) openTool(r);
+});
 
 // ---------- PWA ----------
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

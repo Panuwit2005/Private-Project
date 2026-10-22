@@ -1,7 +1,7 @@
 // Image tools: convert/compress, resize, crop/rotate, watermark, pick colors from a photo.
 
 tool({
-  id: "img-convert", cat: "รูปภาพ", icon: I.image, name: "แปลง & บีบอัดรูปภาพ",
+  id: "img-convert", cat: "image", icon: I.image, name: "แปลง & บีบอัดรูปภาพ",
   desc: "แปลง JPG, PNG, WEBP ไปมา ปรับคุณภาพเพื่อลดขนาดไฟล์ และลบข้อมูล EXIF/GPS ออกอัตโนมัติ",
   keywords: "convert jpg png webp heic image compress บีบอัด exif gps",
   render(body) {
@@ -45,7 +45,7 @@ tool({
 });
 
 tool({
-  id: "img-resize", cat: "รูปภาพ", icon: I.resize, name: "ปรับขนาดรูปภาพ",
+  id: "img-resize", cat: "image", icon: I.resize, name: "ปรับขนาดรูปภาพ",
   desc: "ย่อหรือขยายรูปตามพิกเซลหรือเปอร์เซ็นต์ คงสัดส่วนเดิมอัตโนมัติ",
   keywords: "resize scale ย่อ ขยาย pixel",
   render(body) {
@@ -85,7 +85,7 @@ tool({
 });
 
 tool({
-  id: "img-crop", cat: "รูปภาพ", icon: I.crop, name: "ครอป หมุน & กลับด้าน",
+  id: "img-crop", cat: "image", also: ["creator"], icon: I.crop, name: "ครอป หมุน & กลับด้าน",
   desc: "ตัดรูปตามสัดส่วนยอดนิยม (1:1, 4:5, 16:9, 9:16) หมุน 90° และกลับด้านซ้าย-ขวา",
   keywords: "crop rotate flip ครอป ตัด หมุน square instagram story",
   render(body) {
@@ -132,7 +132,7 @@ tool({
 });
 
 tool({
-  id: "img-watermark", cat: "รูปภาพ", icon: I.stamp, name: "ใส่ลายน้ำ",
+  id: "img-watermark", cat: "image", also: ["creator"], icon: I.stamp, name: "ใส่ลายน้ำ",
   desc: "ใส่ข้อความลายน้ำบนรูป เลือกตำแหน่ง ขนาด ความโปร่งใส หรือแบบเรียงเต็มภาพ",
   keywords: "watermark ลายน้ำ text copyright",
   render(body) {
@@ -173,7 +173,7 @@ tool({
 });
 
 tool({
-  id: "img-colors", cat: "รูปภาพ", icon: I.drop, name: "ดูดสีจากรูป",
+  id: "img-colors", cat: "image", icon: I.drop, name: "ดูดสีจากรูป",
   desc: "แตะบนรูปเพื่อดูดสี และสกัดพาเลตสีหลักของภาพอัตโนมัติ คัดลอก HEX ได้ทันที",
   keywords: "eyedropper color picker palette ดูดสี พาเลต",
   render(body) {
@@ -204,5 +204,63 @@ tool({
         $("button", el).onclick = () => copy(hx);
       };
     }), ui);
+  },
+});
+
+tool({
+  id: "collage", cat: "image", also: ["creator"], icon: I.grid, name: "รวมรูป (คอลลาจ)",
+  desc: "รวมหลายรูปเป็นภาพเดียวแบบตาราง เลือกจำนวนคอลัมน์ ระยะห่าง สีพื้น และสัดส่วนช่อง",
+  keywords: "collage grid รวมรูป ต่อรูป คอลลาจ",
+  render(body) {
+    let imgs = [];
+    const ui = h(`<div><div class="row"><div class="field"><label>คอลัมน์</label><input class="input" type="number" id="cols" value="2" min="1" max="6"></div><div class="field"><label>สัดส่วนช่อง</label><select class="input" id="ar"><option value="1">1:1</option><option value="0.8">4:5</option><option value="1.7778">16:9</option><option value="0.5625">9:16</option></select></div>
+      <div class="field"><label>ระยะห่าง (px)</label><input class="input" type="number" id="gap" value="16" min="0" max="80"></div><div class="field" style="flex:0 0 80px"><label>สีพื้น</label><input type="color" id="bg" value="#ffffff"></div><div class="field"><label>ความกว้างภาพ</label><select class="input" id="W"><option>1080</option><option selected>2048</option><option>4096</option></select></div></div>
+      <div class="canvas-wrap"><canvas id="cv"></canvas></div>
+      <div class="actions"><button class="btn btn-gold" data-f="jpeg">บันทึก JPG</button><button class="btn btn-ghost" data-f="png">บันทึก PNG</button></div></div>`);
+    body.append(dropZone({ accept: "image/*", multiple: true, title: "เลือกรูปหลายรูป", hint: "เรียงตามลำดับที่เลือก" }, async f => { imgs = await Promise.all(f.map(loadImage)); draw(); }), ui);
+    const cv = $("#cv", ui), ctx = cv.getContext("2d");
+    const draw = () => {
+      if (!imgs.length) return;
+      const cols = Math.max(1, Math.min(6, +$("#cols", ui).value || 1)), rows = Math.ceil(imgs.length / cols), gap = +$("#gap", ui).value, W = +$("#W", ui).value, ar = +$("#ar", ui).value;
+      const cw = (W - gap * (cols + 1)) / cols, ch = cw / ar;
+      cv.width = W; cv.height = Math.round(rows * ch + gap * (rows + 1));
+      ctx.fillStyle = $("#bg", ui).value; ctx.fillRect(0, 0, cv.width, cv.height);
+      imgs.forEach((im, i) => {
+        const x = gap + (i % cols) * (cw + gap), y = gap + Math.floor(i / cols) * (ch + gap);
+        const s = Math.max(cw / im.naturalWidth, ch / im.naturalHeight), sw = cw / s, sh = ch / s;
+        ctx.drawImage(im, (im.naturalWidth - sw) / 2, (im.naturalHeight - sh) / 2, sw, sh, x, y, cw, ch);
+      });
+    };
+    $$("input, select", ui).forEach(i => i.oninput = draw);
+    $$("[data-f]", ui).forEach(b => b.onclick = async () => { if (!imgs.length) return toast("เลือกรูปก่อน"); download(await canvasBlob(cv, "image/" + b.dataset.f, .92), "collage." + (b.dataset.f === "jpeg" ? "jpg" : "png")); });
+  },
+});
+
+tool({
+  id: "app-icon", cat: "image", also: ["dev"], icon: I.grid, name: "สร้างไอคอนแอป & Favicon",
+  desc: "จากรูปเดียว สร้างไอคอนครบทุกขนาด (16–1024px) สำหรับเว็บไซต์ แอป iOS/Android พร้อมมุมโค้งและพื้นหลัง",
+  keywords: "favicon icon app icon ไอคอน apple touch icon pwa",
+  render(body) {
+    let img;
+    const SIZES = [16, 32, 48, 180, 192, 512, 1024];
+    const ui = h(`<div><div class="row"><div class="field"><label>มุมโค้ง (%)</label><input type="range" id="rd" min="0" max="50" value="22"></div><div class="field"><label>ระยะขอบ (%)</label><input type="range" id="pd" min="0" max="30" value="10"></div><div class="field" style="flex:0 0 80px"><label>พื้นหลัง</label><input type="color" id="bg" value="#0c0a09"></div><div class="field" style="flex:0 0 auto"><label class="check"><input type="checkbox" id="tr"> พื้นใส</label></div></div>
+      <div class="canvas-wrap" style="padding:20px"><canvas id="pv" width="256" height="256" style="width:160px;height:160px"></canvas></div>
+      <div class="actions"><button class="btn btn-gold" id="all">บันทึกทุกขนาด</button></div><div class="out" id="out"></div></div>`);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูปต้นแบบ (สี่เหลี่ยมจัตุรัสดีที่สุด)", hint: "แนะนำ 1024×1024 ขึ้นไป" }, async ([f]) => { img = await loadImage(f); draw(); }), ui);
+    const render = (size) => {
+      const c = document.createElement("canvas"); c.width = c.height = size; const x = c.getContext("2d");
+      const r = size * $("#rd", ui).value / 100, p = size * $("#pd", ui).value / 100;
+      if (!$("#tr", ui).checked) { x.fillStyle = $("#bg", ui).value; x.beginPath(); x.roundRect ? x.roundRect(0, 0, size, size, r) : x.rect(0, 0, size, size); x.fill(); }
+      if (img) { const s = Math.min((size - 2 * p) / img.naturalWidth, (size - 2 * p) / img.naturalHeight), w = img.naturalWidth * s, hh = img.naturalHeight * s; x.imageSmoothingQuality = "high"; x.drawImage(img, (size - w) / 2, (size - hh) / 2, w, hh); }
+      return c;
+    };
+    const draw = () => { const c = render(256), pv = $("#pv", ui); pv.getContext("2d").clearRect(0, 0, 256, 256); pv.getContext("2d").drawImage(c, 0, 0); };
+    $$("input", ui).forEach(i => i.oninput = draw);
+    $("#all", ui).onclick = async () => {
+      if (!img) return toast("เลือกรูปก่อน");
+      $("#out", ui).innerHTML = `<div class="note">วางในโค้ด HTML: <code>&lt;link rel="icon" href="icon-32.png" sizes="32x32"&gt;</code> · <code>&lt;link rel="apple-touch-icon" href="icon-180.png"&gt;</code></div>`;
+      for (const s of SIZES) { download(await canvasBlob(render(s)), `icon-${s}.png`); await new Promise(r => setTimeout(r, 300)); }
+    };
+    draw();
   },
 });

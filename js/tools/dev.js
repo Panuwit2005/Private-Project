@@ -1,7 +1,7 @@
 // Developer tools: JSON, Base64, URL encode, hash, UUID, timestamp, regex tester, JWT decoder, color converter.
 
 tool({
-  id: "json", cat: "นักพัฒนา", icon: I.code, name: "JSON Formatter",
+  id: "json", cat: "dev", icon: I.code, name: "JSON Formatter",
   desc: "จัดรูปแบบ ตรวจสอบ ย่อ และเรียงคีย์ JSON พร้อมแจ้งตำแหน่งที่ผิดพลาด",
   keywords: "json format beautify minify validate developer",
   render(body) {
@@ -23,7 +23,7 @@ tool({
 });
 
 tool({
-  id: "base64", cat: "นักพัฒนา", icon: I.binary, name: "Base64 เข้ารหัส / ถอดรหัส",
+  id: "base64", cat: "dev", icon: I.binary, name: "Base64 เข้ารหัส / ถอดรหัส",
   desc: "แปลงข้อความหรือไฟล์เป็น Base64 และถอดกลับ รองรับภาษาไทยเต็มรูปแบบ",
   keywords: "base64 encode decode เข้ารหัส developer data url",
   render(body) {
@@ -48,7 +48,7 @@ tool({
 });
 
 tool({
-  id: "url-enc", cat: "นักพัฒนา", icon: I.link, name: "URL Encode / Decode",
+  id: "url-enc", cat: "dev", icon: I.link, name: "URL Encode / Decode",
   desc: "เข้ารหัส/ถอดรหัส URL และแยกส่วนประกอบลิงก์ (โดเมน, path, query) ให้อ่านง่าย",
   keywords: "url encode decode percent query string ลิงก์ ภาษาไทย",
   render(body) {
@@ -76,7 +76,7 @@ tool({
 });
 
 tool({
-  id: "hash", cat: "นักพัฒนา", icon: I.hash, name: "สร้าง Hash (SHA)",
+  id: "hash", cat: "dev", icon: I.hash, name: "สร้าง Hash (SHA)",
   desc: "คำนวณ SHA-1, SHA-256, SHA-512 ของข้อความหรือไฟล์ ใช้ตรวจสอบความถูกต้องของไฟล์ที่ดาวน์โหลด",
   keywords: "hash sha256 sha1 sha512 checksum ตรวจสอบไฟล์",
   render(body) {
@@ -99,7 +99,7 @@ tool({
 });
 
 tool({
-  id: "uuid", cat: "นักพัฒนา", icon: I.id, name: "สร้าง UUID",
+  id: "uuid", cat: "dev", icon: I.id, name: "สร้าง UUID",
   desc: "สร้าง UUID v4 แบบสุ่มทีละหลายรายการ คัดลอกได้ทันที",
   keywords: "uuid guid random id generator",
   render(body) {
@@ -119,7 +119,7 @@ tool({
 });
 
 tool({
-  id: "timestamp", cat: "นักพัฒนา", icon: I.clock, name: "Unix Timestamp",
+  id: "timestamp", cat: "dev", icon: I.clock, name: "Unix Timestamp",
   desc: "แปลง Unix timestamp ⇄ วันเวลา (ไทย/UTC/ISO) พร้อมเวลาปัจจุบันแบบสด",
   keywords: "unix timestamp epoch date time แปลงเวลา",
   render(body) {
@@ -143,7 +143,7 @@ tool({
 });
 
 tool({
-  id: "regex", cat: "นักพัฒนา", icon: I.regex, name: "Regex Tester",
+  id: "regex", cat: "dev", icon: I.regex, name: "Regex Tester",
   desc: "ทดสอบ Regular Expression แบบเรียลไทม์ ไฮไลต์ผลลัพธ์และแสดงกลุ่มที่จับได้",
   keywords: "regex regular expression test pattern",
   render(body) {
@@ -168,7 +168,7 @@ tool({
 });
 
 tool({
-  id: "jwt", cat: "นักพัฒนา", icon: I.key, name: "JWT Decoder",
+  id: "jwt", cat: "dev", icon: I.key, name: "JWT Decoder",
   desc: "ถอดรหัส JSON Web Token ดู Header, Payload และวันหมดอายุ (ไม่ส่งโทเคนออกจากเครื่อง)",
   keywords: "jwt token decode json web token auth",
   render(body) {
@@ -191,7 +191,7 @@ tool({
 });
 
 tool({
-  id: "color", cat: "นักพัฒนา", icon: I.palette, name: "แปลงสี & พาเลต",
+  id: "color", cat: "dev", icon: I.palette, name: "แปลงสี & พาเลต",
   desc: "แปลงค่า HEX, RGB, HSL ตรวจสอบความคมชัด (contrast) และสร้างพาเลตโทนสีอัตโนมัติ",
   keywords: "color hex rgb hsl palette สี contrast",
   render(body) {
@@ -222,5 +222,27 @@ tool({
     $("#c", ui).oninput = e => set(e.target.value);
     $("#hex", ui).oninput = e => { const v = e.target.value.trim().replace(/^#?/, "#"); if (/^#[0-9a-f]{6}$/i.test(v)) set(v.toLowerCase()); };
     set("#d8b46a");
+  },
+});
+
+tool({
+  id: "base-conv", cat: "dev", icon: I.base, name: "แปลงเลขฐาน",
+  desc: "แปลงตัวเลขระหว่างฐาน 2, 8, 10, 16 และฐานอื่นถึง 36 รองรับเลขขนาดใหญ่",
+  keywords: "binary hex octal decimal base converter เลขฐาน ฐานสอง ฐานสิบหก",
+  render(body) {
+    const B = [[2, "ฐาน 2 (Binary)"], [8, "ฐาน 8 (Octal)"], [10, "ฐาน 10 (Decimal)"], [16, "ฐาน 16 (Hex)"]];
+    const ui = h(`<div>${B.map(([b, l]) => `<div class="field" style="margin-top:12px"><label>${l}</label><input class="input" data-b="${b}" style="font-family:var(--font-mono)" spellcheck="false"></div>`).join("")}
+      <div class="row"><div class="field"><label>ฐานอื่น (2–36)</label><input class="input" type="number" id="cb" value="36" min="2" max="36"></div><div class="field" style="flex:3"><label>ค่า</label><input class="input" data-b="x" style="font-family:var(--font-mono)" spellcheck="false"></div></div>
+      <div class="status" id="st"></div></div>`);
+    body.append(ui);
+    const digits = "0123456789abcdefghijklmnopqrstuvwxyz";
+    const parse = (s, b) => { let v = 0n; for (const ch of s.toLowerCase().replace(/[\s_]/g, "")) { const d = digits.indexOf(ch); if (d < 0 || d >= b) throw new Error(`“${ch}” ไม่ใช่ตัวเลขในฐาน ${b}`); v = v * BigInt(b) + BigInt(d); } return v; };
+    const fill = (v, src) => $$("[data-b]", ui).forEach(i => { if (i === src) return; const b = i.dataset.b === "x" ? +$("#cb", ui).value : +i.dataset.b; i.value = v.toString(b).toUpperCase(); });
+    $$("[data-b]", ui).forEach(i => i.oninput = () => {
+      try { const b = i.dataset.b === "x" ? +$("#cb", ui).value : +i.dataset.b; if (!i.value.trim()) return; fill(parse(i.value, b), i); setStatus($("#st", ui), ""); }
+      catch (e) { setStatus($("#st", ui), e.message, true); }
+    });
+    $("#cb", ui).oninput = () => { const d = $('[data-b="10"]', ui); if (d.value) d.oninput(); };
+    $('[data-b="10"]', ui).value = "2026"; $('[data-b="10"]', ui).oninput();
   },
 });
