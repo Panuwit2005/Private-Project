@@ -20,7 +20,7 @@ const store = {
 
 function toast(msg) {
   const t = $("#toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2200);
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 3500); // 3–5 s, long enough to read
 }
 function download(blob, name) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
@@ -52,6 +52,7 @@ const LIB = {
   gifenc: "vendor/gifenc.js",
   heic: "vendor/heic2any.min.js",
   yaml: "vendor/js-yaml.min.js",
+  html2canvas: "vendor/html2canvas.min.js",
 };
 const loaded = {};
 function loadScript(src) {
@@ -170,6 +171,7 @@ const I = {
 // list that file in index.html and sw.js, then register tools with cat: "<id>".
 const CATS = [
   { id: "convert", name: "แปลงไฟล์", icon: I.convert, desc: "แปลงนามสกุลไฟล์ทุกชนิด รูป HEIC เสียง วิดีโอ PDF Excel Word ZIP และ GIF" },
+  { id: "money", name: "เงิน & เอกสารธุรกิจ", icon: I.receipt, desc: "QR พร้อมเพย์ หารค่าทริป ใบเสร็จ ใบแจ้งหนี้ และใบเสนอราคา" },
   { id: "creator", name: "ช่วยทำคลิป", icon: I.clapper, desc: "สคริปต์ เทเลพรอมป์เตอร์ ซับไตเติล ภาพปก และวางแผนคอนเทนต์" },
   { id: "invest", name: "พอร์ตหุ้น & ลงทุน", icon: I.trend, desc: "ติดตามพอร์ต ถัวเฉลี่ย ปันผล ค่าธรรมเนียม และขนาดสถานะ" },
   { id: "image", name: "รูปภาพ", icon: I.image, desc: "แปลง บีบอัด ครอป ลายน้ำ และจัดการรูปภาพ" },

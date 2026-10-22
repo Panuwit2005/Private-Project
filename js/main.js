@@ -45,11 +45,14 @@ function renderShelves() {
 }
 function renderGrid() {
   const term = q.value.trim().toLowerCase();
+  // Smart Paste: if the search box holds something recognisable (a link, number, date…), suggest tools for it.
+  const smart = $("#smart"), smartShown = term ? renderSmart(smart, q.value) : (smart.hidden = true, false);
   if (term) { // flat search results across every category
     const list = TOOLS.filter(t => (cat === "all" || inCat(t, cat)) &&
       (t.name + t.desc + (t.keywords || "") + catById(t.cat).name).toLowerCase().includes(term));
     $("#count").textContent = `พบ ${list.length} เครื่องมือ`;
-    grid.innerHTML = list.length ? `<div class="grid">${list.map((t, i) => card(t, i)).join("")}</div>` : `<div class="empty">ไม่พบเครื่องมือที่ตรงกับ “${esc(q.value)}”</div>`;
+    grid.innerHTML = list.length ? `<div class="grid">${list.map((t, i) => card(t, i)).join("")}</div>` : smartShown ? "" : `<div class="empty-hint"><b>ไม่พบเครื่องมือที่ตรงกับ “${esc(q.value.slice(0, 40))}”</b><span>ลองคำอื่น เช่น “รูป”, “PDF”, “เงิน” หรือวางข้อมูลที่อยากจัดการลงในช่องนี้</span></div>`;
+    if (smartShown && !list.length) $("#count").textContent = "";
     return;
   }
   if (cat === "all") {
@@ -64,6 +67,17 @@ function renderGrid() {
 q.addEventListener("input", renderGrid);
 grid.addEventListener("click", e => { const b = e.target.closest("[data-open-cat]"); if (b) setCat(b.dataset.openCat, true); });
 renderShelves();
+
+$("#pasteBtn").onclick = async () => { const t = await readClipboard(); if (t != null) { q.value = t; renderGrid(); $("#smart").hidden || $("#smart").scrollIntoView({ behavior: "smooth", block: "nearest" }); } };
+
+// Backup reminder: shown when the user has their own records and hasn't backed up in 14 days.
+function renderBanner() {
+  const el = $("#banner"), last = store.get("meta:lastBackup", 0), snooze = store.get("meta:snooze", 0), d = daysSince(last);
+  if (!hasRecords() || (d !== null && d < 14) || Date.now() < snooze) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="banner glass" role="region" aria-label="เตือนสำรองข้อมูล"><span class="ic" aria-hidden="true">${I.key}</span><div><b>${d === null ? "ยังไม่เคยสำรองข้อมูล" : `สำรองข้อมูลล่าสุด ${d} วันที่แล้ว`}</b><span>ข้อมูลของคุณอยู่ในเครื่องนี้เท่านั้น ถ้าล้าง Safari ข้อมูลจะหาย</span></div><div class="banner-acts"><button class="btn btn-gold btn-sm" data-id="backup">สำรองตอนนี้</button><button class="btn btn-ghost btn-sm" id="snooze">ไว้ทีหลัง</button></div></div>`;
+  $("#snooze").onclick = () => { store.set("meta:snooze", Date.now() + 7 * 864e5); renderBanner(); };
+}
+renderBanner();
 
 document.addEventListener("click", e => {
   const pin = e.target.closest("[data-pin]");
@@ -87,7 +101,8 @@ grid.addEventListener("pointermove", e => {
 // ---------- Modal ----------
 const modal = $("#modal");
 let lastFocus, cleanup;
-function openTool(id) {
+// prefill: { pre: [selectors clicked first], fields: { id: value }, post: [selectors clicked after] }
+function openTool(id, prefill) {
   const t = byId(id); if (!t) return;
   if (modal.classList.contains("open")) runCleanup();
   lastFocus = document.activeElement;
@@ -95,7 +110,7 @@ function openTool(id) {
   $("#panelTitle").textContent = t.name; $("#panelDesc").textContent = t.desc;
   const body = $("#panelBody"); body.innerHTML = "";
   currentTool = t;
-  try { cleanup = t.render(body); restoreFields(t, body); }
+  try { cleanup = t.render(body); restoreFields(t, body); if (prefill) applyPrefill(body, prefill); }
   catch (err) { body.innerHTML = `<div class="status err">เกิดข้อผิดพลาด: ${esc(err.message)}</div>`; }
   $("#panelFoot").hidden = t.persist === false;
   modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.body.classList.add("lock");
@@ -103,6 +118,15 @@ function openTool(id) {
   recent = [id, ...recent.filter(x => x !== id)].slice(0, 12); store.set("recent", recent);
   setTimeout(() => $(".close", modal).focus(), 50);
 }
+function applyPrefill(body, { pre = [], fields = {}, post = [] }) {
+  pre.forEach(sel => $(sel, body)?.click());
+  for (const [id, v] of Object.entries(fields)) {
+    const el = body.querySelector("#" + CSS.escape(id)); if (!el) continue;
+    el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  post.forEach(sel => $(sel, body)?.click());
+}
+
 // ---------- Remember inputs per tool ----------
 // Every field with an id is saved per tool and restored on the next open. Tools whose fields may
 // hold secrets or depend on "now" opt out with persist: false.
@@ -146,7 +170,7 @@ function closeTool() {
   modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true"); document.body.classList.remove("lock");
   $("#panelBody").innerHTML = "";
   history.replaceState(null, "", cat === "all" ? location.pathname + location.search : "#c/" + cat);
-  renderShelves();
+  renderShelves(); renderBanner();
   lastFocus?.focus();
 }
 $$("[data-close]", modal).forEach(el => el.onclick = closeTool);

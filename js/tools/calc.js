@@ -79,7 +79,7 @@ tool({
 });
 
 tool({
-  id: "vat", cat: "calc", icon: I.receipt, name: "VAT 7% & ส่วนลด",
+  id: "vat", cat: "calc", also: ["money"], icon: I.receipt, name: "VAT 7% & ส่วนลด",
   desc: "คำนวณภาษีมูลค่าเพิ่ม (รวม/แยก VAT), หัก ณ ที่จ่าย และราคาหลังหักส่วนลด",
   keywords: "vat 7% ภาษีมูลค่าเพิ่ม ส่วนลด discount หัก ณ ที่จ่าย withholding",
   render(body) {
@@ -218,7 +218,7 @@ tool({
 });
 
 tool({
-  id: "split-bill", cat: "calc", icon: I.users, name: "หารค่าอาหาร",
+  id: "split-bill", cat: "calc", also: ["money"], icon: I.users, name: "หารค่าอาหาร",
   desc: "หารบิลกับเพื่อน รวมเซอร์วิสชาร์จ 10% VAT 7% และทิป ปัดเศษให้อัตโนมัติ",
   keywords: "split bill หารค่าอาหาร service charge tip ทิป เพื่อน",
   render(body) {
@@ -409,7 +409,7 @@ tool({
 });
 
 tool({
-  id: "discount", cat: "calc", also: ["daily"], icon: I.percent, name: "ส่วนลดซ้อน & โค้ด",
+  id: "discount", cat: "calc", also: ["money", "daily"], icon: I.percent, name: "ส่วนลดซ้อน & โค้ด",
   desc: "คำนวณราคาหลังลดหลายต่อ (เช่น ลด 20% แล้วลดอีก 10% + โค้ด 100 บาท) ดูว่าลดจริงกี่เปอร์เซ็นต์",
   keywords: "discount sale coupon ส่วนลด ลดซ้อน โค้ด คูปอง ลดกี่เปอร์เซ็นต์",
   render(body) {
@@ -430,7 +430,7 @@ tool({
 });
 
 tool({
-  id: "currency", cat: "calc", also: ["invest"], icon: I.coins, name: "แปลงสกุลเงิน (ใส่เรทเอง)",
+  id: "currency", cat: "calc", also: ["money", "invest"], icon: I.coins, name: "แปลงสกุลเงิน (ใส่เรทเอง)",
   desc: "แปลงเงินบาทกับสกุลอื่นตามอัตราแลกเปลี่ยนที่คุณกรอก บันทึกเรทที่ใช้บ่อยไว้ได้ เหมาะตอนเที่ยวหรือช้อปต่างประเทศ",
   keywords: "currency exchange rate แลกเงิน สกุลเงิน ดอลลาร์ เยน วอน ยูโร usd jpy krw eur",
   render(body) {

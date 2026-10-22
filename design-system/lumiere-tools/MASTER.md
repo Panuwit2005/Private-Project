@@ -99,6 +99,22 @@ disables all animation and transition.
 | Modal | Scrim `--color-scrim`, near-opaque `--surface-panel`, close button 44×44 top-right, Esc closes, focus returns to the opener. |
 | Icon | SVG stroke 1.6px, `currentColor`, inside a 50px gold-tinted tile. No emoji as icons in chrome. |
 
+### Feedback & guidance components (added with Smart Paste / Backup / Money tools)
+
+| Component | Spec |
+|---|---|
+| Toast | `role="status"` + `aria-live="polite"`, visible 3.5 s (UX guideline: 3–5 s, auto-dismiss). |
+| Field message `.field-msg` | Directly under its input, linked with `aria-describedby`; neutral → `.err` (danger) → `.warn` (accent-strong). Never only a top-level error. |
+| Empty state `.empty-hint` | Dashed `--color-border-strong` box: one bold line saying what is missing + one line saying what to do. Never a blank area. |
+| Callout `.callout` | Accent-tinted box with 40 px icon tile for important context (e.g. “data lives only on this device”). |
+| Steps `.step` | Numbered sections (gold 28 px badge) for multi-part tools: people → expenses → summary. |
+| Smart suggestions `.smart` | Header names what was detected; each row = icon tile, action title, inline answer in `--color-accent-strong` when available, chevron; optional “คัดลอก”. Rows are ≥ 56 px tall. |
+| Reminder banner `.banner` | Accent border, icon, two lines, primary + “ไว้ทีหลัง” (snoozes 7 days). Only for risk of data loss. |
+| Destructive / overwrite | Confirm dialog first; restore keeps a one-step undo. |
+| Delete-row `.rm` | 40 px (44 px on touch), subtle ink, danger on hover; always has an `aria-label` naming the item. |
+
+Printable documents (receipts, invoices, PromptPay card) use the light override in `pages/document.md`.
+
 ## Accessibility contract
 
 - Every interactive element shows a 2px gold `--focus-ring` (offset by 2px of background) on `:focus-visible`.
