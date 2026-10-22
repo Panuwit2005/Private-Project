@@ -76,7 +76,7 @@ tool({
 });
 
 tool({
-  id: "hash", cat: "dev", persist: false, icon: I.hash, name: "สร้าง Hash (SHA)",
+  id: "hash", cat: "dev", also: ["security"], persist: false, icon: I.hash, name: "สร้าง Hash (SHA)",
   desc: "คำนวณ SHA-1, SHA-256, SHA-512 ของข้อความหรือไฟล์ ใช้ตรวจสอบความถูกต้องของไฟล์ที่ดาวน์โหลด",
   keywords: "hash sha256 sha1 sha512 checksum ตรวจสอบไฟล์",
   render(body) {
@@ -168,7 +168,7 @@ tool({
 });
 
 tool({
-  id: "jwt", cat: "dev", persist: false, icon: I.key, name: "JWT Decoder",
+  id: "jwt", cat: "dev", also: ["security"], persist: false, icon: I.key, name: "JWT Decoder",
   desc: "ถอดรหัส JSON Web Token ดู Header, Payload และวันหมดอายุ (ไม่ส่งโทเคนออกจากเครื่อง)",
   keywords: "jwt token decode json web token auth",
   render(body) {
@@ -291,5 +291,188 @@ tool({
         if (a === "unjs") t.value = JSON.parse(`"${t.value.replace(/(^|[^\\])"/g, '$1\\"')}"`);
       } catch (e) { setStatus($("#st", ui), "แปลงไม่ได้: " + e.message, true); }
     });
+  },
+});
+
+// ---------- Case converter ----------
+const splitWords = (s) => s.replace(/([a-z\d])([A-Z])/g, "$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2").split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+const CASES = [
+  ["camelCase", (w) => w.map((x, i) => i ? x[0].toUpperCase() + x.slice(1).toLowerCase() : x.toLowerCase()).join("")],
+  ["PascalCase", (w) => w.map(x => x[0].toUpperCase() + x.slice(1).toLowerCase()).join("")],
+  ["snake_case", (w) => w.map(x => x.toLowerCase()).join("_")],
+  ["CONSTANT_CASE", (w) => w.map(x => x.toUpperCase()).join("_")],
+  ["kebab-case", (w) => w.map(x => x.toLowerCase()).join("-")],
+  ["Title Case", (w) => w.map(x => x[0].toUpperCase() + x.slice(1).toLowerCase()).join(" ")],
+  ["dot.case", (w) => w.map(x => x.toLowerCase()).join(".")],
+  ["path/case", (w) => w.map(x => x.toLowerCase()).join("/")],
+];
+tool({
+  id: "case-convert", cat: "dev", also: ["text"], fresh: true, icon: I.text, name: "แปลงรูปแบบตัวพิมพ์ (camelCase, snake_case…)",
+  desc: "แปลงชื่อตัวแปรหรือข้อความเป็น camelCase, PascalCase, snake_case, kebab-case, UPPER, lower ได้ทุกแบบพร้อมกัน แตะเพื่อคัดลอก",
+  keywords: "case converter camelcase snake_case kebab pascal upper lower title ตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก ชื่อตัวแปร",
+  render(body) {
+    const ui = h(`<div><div class="field"><label for="src">ข้อความ</label><textarea class="input" id="src" style="min-height:80px">user profile image URL</textarea><small class="field-msg">ใส่หลายบรรทัดได้ แปลงทีละบรรทัด</small></div><div class="data-list" id="out" style="margin-top:14px"></div></div>`);
+    body.append(ui);
+    const ALL = [...CASES, ["UPPERCASE", null], ["lowercase", null], ["Sentence case", null]];
+    const conv = (name, fn, line) => fn ? (splitWords(line).length ? fn(splitWords(line)) : "")
+      : name === "UPPERCASE" ? line.toUpperCase() : name === "lowercase" ? line.toLowerCase() : line.toLowerCase().replace(/(^\s*|[.!?]\s+)(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+    const run = () => {
+      const lines = $("#src", ui).value.split("\n");
+      $("#out", ui).innerHTML = ALL.map(([n, fn]) => { const v = lines.map(l => conv(n, fn, l)).join("\n"); return `<button type="button" class="smart-item" data-v="${esc(v)}" style="width:100%;text-align:left"><span class="smart-text"><small>${n}</small><code style="display:block;white-space:pre-wrap;word-break:break-all;color:var(--color-accent-strong)">${esc(v) || "—"}</code></span></button>`; }).join("");
+      $$("[data-v]", ui).forEach(b => b.onclick = () => copy(b.dataset.v));
+    };
+    $("#src", ui).oninput = run; run();
+  },
+});
+
+// ---------- Code beautify / minify ----------
+function fmtMarkup(src, xml) {
+  const VOID = /^(area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i, RAW = /^(pre|script|style|textarea)$/i;
+  const INLINE = /^(a|abbr|b|bdi|bdo|br|cite|code|data|dfn|em|i|kbd|label|mark|q|s|samp|small|span|strong|sub|sup|time|u|var)$/i;
+  // <script>/<style>/<pre>/<textarea> bodies are one token so their content is never re-indented.
+  const tokens = (src.replace(/>\s+</g, "><").trim().match(/<(script|style|pre|textarea)\b[\s\S]*?<\/\1>|<!--[\s\S]*?-->|<[^>]+>|[^<]+|</gi) || []).filter(t => t.trim());
+  const out = [], stack = []; let depth = 0, inl = false;
+  const add = (t) => { out[out.length - 1] += t.replace(/\s+/g, " "); };
+  for (const t of tokens) {
+    const isTag = /^<[!?/\w]/.test(t), close = /^<\//.test(t), open = /^<[^!?/]/.test(t), name = (t.match(/^<\/?([\w:-]+)/) || [])[1] || "";
+    const self = /\/>$/.test(t) || (!xml && (VOID.test(name) || RAW.test(name)));
+    // Text and inline tags (<b>, <a>…) stay on one line with the text around them.
+    if (!isTag || (!xml && INLINE.test(name))) {
+      const last = out.length - 1;
+      if (inl || (last >= 0 && stack[stack.length - 1] === last && />$/.test(out[last]))) add(t);
+      else out.push("  ".repeat(depth) + t.trim());
+      inl = true; continue;
+    }
+    if (close) {
+      depth = Math.max(0, depth - 1);
+      // An element whose content all fits on its opening line closes on that line too.
+      if (stack.pop() === out.length - 1) { add(t); inl = false; continue; }
+    }
+    inl = false;
+    out.push("  ".repeat(depth) + t.trim());
+    if (open && !self) { stack.push(out.length - 1); depth++; }
+  }
+  return out.join("\n");
+}
+function fmtCss(src) {
+  // Comments and (...) groups such as url(data:…;base64,…) are set aside so their ; , : are left alone.
+  const keep = [], hold = (m) => `\u0001${keep.push(m) - 1}\u0001`;
+  let d = 0;
+  const css = src.replace(/\/\*[\s\S]*?\*\//g, m => hold(m + "\n") + "\u0002").replace(/\([^()]*\)/g, hold);
+  return css.replace(/\s+/g, " ").replace(/([^;{}\s])\s*}/g, "$1;}").replace(/\s*([{};])\s*/g, "$1").split(/(?<=[{};])/).map(p => {
+    p = p.trim(); if (!p) return "";
+    if (p === "}") { d = Math.max(0, d - 1); return "  ".repeat(d) + "}"; }
+    const line = "  ".repeat(d) + (p.endsWith("{") ? p.replace(/\s*,\s*/g, ",\n" + "  ".repeat(d)).replace(/\s*{$/, " {") : p.replace(/:(?!\s)/, ": "));
+    if (p.endsWith("{")) d++;
+    return line;
+  }).filter(Boolean).join("\n").replace(/}\n(?=[^\s}])/g, "}\n\n").replace(/\u0002 ?/g, "").replace(/\u0001(\d+)\u0001/g, (_, i) => keep[i]).trim();
+}
+const SQL_KW = "select|from|where|and|or|order by|group by|having|limit|offset|insert into|values|update|set|delete from|left join|right join|inner join|outer join|full join|join|on|union all|union|create table|alter table|drop table|as|in|not|null|is|like|between|distinct|count|sum|avg|min|max|case|when|then|else|end|desc|asc";
+function fmtSql(src) {
+  let s = src.replace(/\s+/g, " ").trim().replace(new RegExp(`\\b(${SQL_KW})\\b`, "gi"), m => m.toUpperCase());
+  s = s.replace(/\s*\b(SELECT|FROM|WHERE|ORDER BY|GROUP BY|HAVING|LIMIT|OFFSET|INSERT INTO|VALUES|UPDATE|SET|DELETE FROM|UNION ALL|UNION|(?:LEFT |RIGHT |INNER |OUTER |FULL )?JOIN)\b/g, "\n$1");
+  s = s.replace(/\s*\b(AND|OR)\b\s*/g, "\n  $1 ").replace(/,\s*(?![^(]*\))/g, ",\n  ");
+  return s.replace(/^\n/, "").replace(/;\s*/g, ";\n\n").trim();
+}
+const minify = {
+  html: (s) => s.replace(/<!--(?!\[if)[\s\S]*?-->/g, "").replace(/>\s+</g, "><").replace(/\s{2,}/g, " ").trim(),
+  css: (s) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").replace(/\s*([{}:;,>~+])\s*/g, "$1").replace(/;}/g, "}").trim(),
+  sql: (s) => s.replace(/--.*$/gm, "").replace(/\s+/g, " ").trim(),
+};
+minify.xml = minify.html;
+tool({
+  id: "code-format", cat: "dev", fresh: true, icon: I.code, name: "จัดรูปแบบโค้ด HTML / CSS / XML / SQL",
+  desc: "จัดย่อหน้าโค้ดให้อ่านง่าย (Beautify) หรือบีบให้เล็กที่สุด (Minify) พร้อมบอกขนาดที่ลดลง",
+  keywords: "beautify minify format prettify html css xml sql formatter จัดรูปแบบ โค้ด ย่อ",
+  render(body) {
+    const ui = h(`<div><div class="tabs" id="lg"><button class="chip active" data-l="html">HTML</button><button class="chip" data-l="css">CSS</button><button class="chip" data-l="xml">XML</button><button class="chip" data-l="sql">SQL</button></div>
+      <div class="field"><label for="src">โค้ดต้นฉบับ</label><textarea class="input" id="src" style="min-height:150px" placeholder="วางโค้ด…"></textarea></div>
+      <div class="actions"><button class="btn btn-gold" id="b">จัดให้สวย</button><button class="btn btn-ghost" id="m">บีบให้เล็ก</button></div>
+      <textarea class="input" id="out" readonly style="min-height:180px"></textarea><div class="actions"><button class="btn btn-ghost btn-sm" id="cp">คัดลอก</button></div><div class="status" id="st"></div></div>`);
+    body.append(ui);
+    let lang = "html";
+    $$("[data-l]", ui).forEach(b => b.onclick = () => { lang = b.dataset.l; $$("[data-l]", ui).forEach(x => x.classList.toggle("active", x === b)); });
+    const go = (fn) => {
+      const src = $("#src", ui).value;
+      if (!src.trim()) { setStatus($("#st", ui), "วางโค้ดก่อน", true); return; }
+      const out = fn(src); $("#out", ui).value = out;
+      const a = new Blob([src]).size, b = new Blob([out]).size;
+      setStatus($("#st", ui), `${fmtSize(a)} → ${fmtSize(b)}` + (b < a ? ` (เล็กลง ${Math.round((1 - b / a) * 100)}%)` : ""));
+    };
+    $("#b", ui).onclick = () => go(s => lang === "css" ? fmtCss(s) : lang === "sql" ? fmtSql(s) : fmtMarkup(s, lang === "xml"));
+    $("#m", ui).onclick = () => go(minify[lang]);
+    $("#cp", ui).onclick = () => copy($("#out", ui).value);
+  },
+});
+
+// ---------- CSS generator: gradient, shadow, radius ----------
+tool({
+  id: "css-gen", cat: "dev", also: ["creator"], fresh: true, icon: I.palette, name: "สร้าง CSS Gradient / Shadow / มุมโค้ง",
+  desc: "ปรับแถบเลื่อนแล้วเห็นผลจริงทันที ได้โค้ด CSS สำหรับไล่สี เงา และมุมโค้ง พร้อมคัดลอก",
+  keywords: "css generator gradient box-shadow border-radius ไล่สี เงา มุมโค้ง โค้ด",
+  render(body) {
+    const sl = (id, label, min, max, val, unit = "") => `<div class="field"><label for="${id}">${label}: <span data-for="${id}">${val}${unit}</span></label><input type="range" id="${id}" min="${min}" max="${max}" value="${val}" data-unit="${unit}"></div>`;
+    const ui = h(`<div><div class="tabs" id="mode"><button class="chip active" data-m="g">ไล่สี</button><button class="chip" data-m="s">เงา</button><button class="chip" data-m="r">มุมโค้ง</button></div>
+      <div class="css-stage"><div class="css-demo" id="demo"></div></div>
+      <div data-p="g"><div class="row"><div class="field"><label for="c1">สีที่ 1</label><input class="input" type="color" id="c1" value="#ecd29a"></div><div class="field"><label for="c2">สีที่ 2</label><input class="input" type="color" id="c2" value="#6b4f9e"></div><div class="field"><label for="gt">แบบ</label><select class="input" id="gt"><option value="linear">Linear</option><option value="radial">Radial</option><option value="conic">Conic</option></select></div></div><div class="row">${sl("ga", "มุม", 0, 360, 135, "°")}</div></div>
+      <div data-p="s" hidden><div class="row">${sl("sx", "แกน X", -50, 50, 0, "px")}${sl("sy", "แกน Y", -50, 50, 12, "px")}</div><div class="row">${sl("sb", "เบลอ", 0, 100, 32, "px")}${sl("ss", "ขยาย", -30, 30, -4, "px")}</div><div class="row"><div class="field"><label for="sc">สีเงา</label><input class="input" type="color" id="sc" value="#000000"></div>${sl("so", "ความทึบ", 0, 100, 45, "%")}<label class="check"><input type="checkbox" id="si">ด้านใน (inset)</label></div></div>
+      <div data-p="r" hidden><div class="row">${sl("r1", "บนซ้าย", 0, 120, 24, "px")}${sl("r2", "บนขวา", 0, 120, 24, "px")}</div><div class="row">${sl("r3", "ล่างขวา", 0, 120, 24, "px")}${sl("r4", "ล่างซ้าย", 0, 120, 24, "px")}</div><label class="check"><input type="checkbox" id="rl" checked>ปรับทุกมุมพร้อมกัน</label></div>
+      ${codeOut("out", 3)}<div class="actions"><button class="btn btn-gold btn-sm" id="cp">คัดลอก CSS</button></div></div>`);
+    body.append(ui);
+    let mode = "g";
+    const v = (id) => $("#" + id, ui).value;
+    const rgba = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, ${a})`;
+    const run = (e) => {
+      if (e && /^r[1-4]$/.test(e.target.id) && $("#rl", ui).checked) ["r1", "r2", "r3", "r4"].forEach(id => $("#" + id, ui).value = e.target.value);
+      $$("input[type=range]", ui).forEach(r => $(`[data-for="${r.id}"]`, ui).textContent = r.value + r.dataset.unit);
+      const demo = $("#demo", ui); demo.removeAttribute("style");
+      let css;
+      if (mode === "g") { const t = v("gt"); css = `background: ${t}-gradient(${t === "linear" ? v("ga") + "deg, " : t === "conic" ? `from ${v("ga")}deg, ` : "circle, "}${v("c1")}, ${v("c2")});`; }
+      else if (mode === "s") css = `box-shadow: ${$("#si", ui).checked ? "inset " : ""}${v("sx")}px ${v("sy")}px ${v("sb")}px ${v("ss")}px ${rgba(v("sc"), (v("so") / 100).toFixed(2))};`;
+      else { const r = ["r1", "r2", "r3", "r4"].map(v); css = `border-radius: ${new Set(r).size === 1 ? r[0] + "px" : r.map(x => x + "px").join(" ")};`; }
+      demo.setAttribute("style", css + (mode === "s" ? "background:var(--color-text);" : mode === "r" ? "background:var(--accent-grad);" : ""));
+      $("#out", ui).value = css;
+    };
+    $$("[data-m]", ui).forEach(b => b.onclick = () => { mode = b.dataset.m; $$("[data-m]", ui).forEach(x => x.classList.toggle("active", x === b)); $$("[data-p]", ui).forEach(p => p.hidden = p.dataset.p !== mode); run(); });
+    $$("input,select", ui).forEach(i => i.addEventListener("input", run));
+    $("#cp", ui).onclick = () => copy($("#out", ui).value);
+    run();
+  },
+});
+
+// ---------- Markdown table generator ----------
+tool({
+  id: "md-table", cat: "dev", also: ["docs"], fresh: true, icon: I.table, name: "สร้างตาราง Markdown",
+  desc: "วางข้อมูลจาก Excel / Google Sheets / CSV แล้วได้ตาราง Markdown ที่จัดคอลัมน์ตรงสวย กำหนดการจัดชิดได้",
+  keywords: "markdown table generator excel csv tsv ตาราง github readme",
+  render(body) {
+    const ui = h(`<div><div class="field"><label for="src">ข้อมูล (คัดลอกจาก Excel หรือ CSV)</label><textarea class="input" id="src" style="min-height:120px">สินค้า	ราคา	คงเหลือ
+กาแฟ	55	120
+ชาเขียว	45	80</textarea></div>
+      <div class="row"><div class="field"><label for="al">จัดชิด</label><select class="input" id="al"><option value="l">ซ้าย</option><option value="c">กลาง</option><option value="r">ขวา</option><option value="auto">อัตโนมัติ (ตัวเลขชิดขวา)</option></select></div><label class="check"><input type="checkbox" id="pad" checked>จัดคอลัมน์ให้ตรง</label></div>
+      ${codeOut("out", 8)}<div class="actions"><button class="btn btn-gold btn-sm" id="cp">คัดลอก</button></div><div class="table-wrap" id="pv" style="margin-top:12px"></div></div>`);
+    body.append(ui);
+    const run = () => {
+      const src = $("#src", ui).value.trim();
+      if (!src) { $("#out", ui).value = ""; $("#pv", ui).innerHTML = ""; return; }
+      const sep = src.includes("\t") ? "\t" : src.includes(";") && !src.includes(",") ? ";" : ",";
+      const parseLine = (l) => sep === "\t" ? l.split("\t") : (l.match(new RegExp(`("([^"]|"")*"|[^${sep}]*)(${sep}|$)`, "g")) || []).slice(0, -1).map(c => c.replace(new RegExp(`${sep}$`), "").replace(/^"|"$/g, "").replace(/""/g, '"'));
+      const rows = src.split(/\r?\n/).map(parseLine), cols = Math.max(...rows.map(r => r.length));
+      rows.forEach(r => { while (r.length < cols) r.push(""); });
+      const cell = (s) => s.trim().replace(/\|/g, "\\|");
+      const al = $("#al", ui).value;
+      const aligns = Array.from({ length: cols }, (_, c) => al !== "auto" ? al : rows.slice(1).every(r => !r[c].trim() || /^-?[\d,.]+%?$/.test(r[c].trim())) ? "r" : "l");
+      const w = Array.from({ length: cols }, (_, c) => Math.max(3, ...rows.map(r => [...cell(r[c])].length)));
+      const padOn = $("#pad", ui).checked;
+      const fit = (s, c) => { if (!padOn) return s; const gap = w[c] - [...s].length; return aligns[c] === "r" ? " ".repeat(gap) + s : aligns[c] === "c" ? " ".repeat(gap >> 1) + s + " ".repeat(gap - (gap >> 1)) : s + " ".repeat(gap); };
+      const line = (r) => "| " + r.map((s, c) => fit(cell(s), c)).join(" | ") + " |";
+      const dash = (c) => { const n = padOn ? w[c] : 3; return aligns[c] === "c" ? ":" + "-".repeat(n - 2) + ":" : aligns[c] === "r" ? "-".repeat(n - 1) + ":" : "-".repeat(n); };
+      $("#out", ui).value = [line(rows[0]), "| " + aligns.map((_, c) => dash(c)).join(" | ") + " |", ...rows.slice(1).map(line)].join("\n");
+      const ta = { l: "left", c: "center", r: "right" };
+      $("#pv", ui).innerHTML = `<table class="data-table"><thead><tr>${rows[0].map((s, c) => `<th style="text-align:${ta[aligns[c]]}">${esc(s)}</th>`).join("")}</tr></thead><tbody>${rows.slice(1).map(r => `<tr>${r.map((s, c) => `<td style="text-align:${ta[aligns[c]]}">${esc(s)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    };
+    $$("textarea,select,input", ui).forEach(e => e.oninput = run);
+    $("#cp", ui).onclick = () => copy($("#out", ui).value);
+    run();
   },
 });

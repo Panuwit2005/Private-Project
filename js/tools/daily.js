@@ -150,7 +150,7 @@ tool({
 const rnd = (n) => crypto.getRandomValues(new Uint32Array(1))[0] % n;
 
 tool({
-  id: "random", cat: "daily", icon: I.dice, name: "สุ่มตัวเลข / ทอยเต๋า / โยนเหรียญ",
+  id: "random", cat: "daily", also: ["fun"], icon: I.dice, name: "สุ่มตัวเลข / ทอยเต๋า / โยนเหรียญ",
   desc: "สุ่มตัวเลขในช่วงที่กำหนด ทอยลูกเต๋า หรือโยนเหรียญหัว-ก้อย",
   keywords: "random number dice coin สุ่ม ลูกเต๋า เหรียญ หัวก้อย",
   render(body) {
@@ -176,7 +176,7 @@ tool({
 });
 
 tool({
-  id: "wheel", cat: "daily", icon: I.wheel, name: "วงล้อสุ่ม",
+  id: "wheel", cat: "daily", also: ["fun"], icon: I.wheel, name: "วงล้อสุ่ม",
   desc: "ใส่ตัวเลือกแล้วหมุนวงล้อ ช่วยตัดสินใจ กินอะไรดี ใครจ่าย หรือจับฉลาก",
   keywords: "wheel spin picker วงล้อ สุ่ม กินอะไรดี จับฉลาก",
   render(body) {
@@ -320,7 +320,7 @@ tool({
 });
 
 tool({
-  id: "password", cat: "daily", icon: I.key, name: "สร้างรหัสผ่าน",
+  id: "password", cat: "daily", also: ["security"], icon: I.key, name: "สร้างรหัสผ่าน",
   desc: "สร้างรหัสผ่านที่แข็งแรงด้วยการสุ่มแบบเข้ารหัส กำหนดความยาวและชนิดอักขระได้",
   keywords: "password generator รหัสผ่าน random security",
   render(body) {
@@ -345,7 +345,7 @@ tool({
 });
 
 tool({
-  id: "teams", cat: "daily", icon: I.team, name: "สุ่มแบ่งทีม / จับคู่",
+  id: "teams", cat: "daily", also: ["fun"], icon: I.team, name: "สุ่มแบ่งทีม / จับคู่",
   desc: "ใส่รายชื่อแล้วสุ่มแบ่งเป็นกลุ่มตามจำนวนทีมหรือจำนวนคนต่อทีม สุ่มลำดับเวร หรือจับคู่",
   keywords: "random team group แบ่งทีม แบ่งกลุ่ม จับคู่ สุ่มชื่อ",
   render(body) {
@@ -427,5 +427,101 @@ tool({
     };
     $("#l", ui).onclick = e => { const b = e.target.closest("[data-rm]"); if (b) { ls.splice(+b.dataset.rm, 1); store.set("links", ls); draw(); } };
     draw();
+  },
+});
+
+// ---------- Barcode generator (Code 128 / EAN-13) ----------
+const C128 = "212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232 2331112".split(" ");
+// Returns module widths (bar, space, bar, …). Digit runs of 4+ switch to code set C for a shorter barcode.
+function code128(text) {
+  if (!/^[\x20-\x7e]*$/.test(text)) throw new Error("Code 128 รองรับเฉพาะตัวอักษรภาษาอังกฤษ ตัวเลข และสัญลักษณ์");
+  const codes = []; let set = null, i = 0;
+  while (i < text.length) {
+    const run = (text.slice(i).match(/^\d+/) || [""])[0];
+    if (run.length >= 4 || (set === "C" && run.length >= 2)) {
+      const n = run.length - (run.length % 2);
+      codes.push(set === null ? 105 : set === "C" ? null : 99); set = "C";
+      for (let k = 0; k < n; k += 2) codes.push(+run.slice(k, k + 2));
+      i += n;
+    } else {
+      codes.push(set === null ? 104 : set === "B" ? null : 100); set = "B";
+      codes.push(text.charCodeAt(i) - 32); i++;
+    }
+  }
+  const seq = codes.filter(c => c !== null);
+  const check = seq.reduce((s, c, k) => s + c * (k || 1), 0) % 103;
+  return [...seq, check, 106].map(c => C128[c]).join("");
+}
+const EAN_L = "0001101 0011001 0010011 0111101 0100011 0110001 0101111 0111011 0110111 0001011".split(" ");
+const EAN_G = EAN_L.map(p => [...p].map(b => b === "0" ? "1" : "0").reverse().join(""));
+const EAN_R = EAN_L.map(p => [...p].map(b => b === "0" ? "1" : "0").join(""));
+const EAN_PAR = "LLLLLL LLGLGG LLGGLG LLGGGL LGLLGG LGGLLG LGGGLL LGLGLG LGLGGL LGGLGL".split(" ");
+const eanCheck = (d12) => (10 - [...d12].reduce((s, c, i) => s + +c * (i % 2 ? 3 : 1), 0) % 10) % 10;
+function ean13(code) {
+  const d = code.replace(/\D/g, "");
+  if (d.length !== 12 && d.length !== 13) throw new Error("EAN-13 ต้องเป็นตัวเลข 12 หรือ 13 หลัก");
+  const full = d.slice(0, 12) + eanCheck(d.slice(0, 12));
+  if (d.length === 13 && d[12] !== full[12]) throw new Error(`เลขตรวจสอบไม่ถูกต้อง หลักสุดท้ายควรเป็น ${full[12]}`);
+  const par = EAN_PAR[+full[0]];
+  const bits = "101" + [...full.slice(1, 7)].map((c, i) => (par[i] === "L" ? EAN_L : EAN_G)[+c]).join("") + "01010" + [...full.slice(7)].map(c => EAN_R[+c]).join("") + "101";
+  return { bits, full };
+}
+function barcodeSvg(kind, value, { h: H = 90, scale = 2, text = true } = {}) {
+  let rects = [], W, label = value;
+  if (kind === "ean") {
+    const { bits, full } = ean13(value); label = full;
+    const guard = new Set([0, 1, 2, 45, 46, 47, 48, 49, 92, 93, 94]);
+    W = bits.length + 18;
+    [...bits].forEach((b, i) => { if (b === "1") rects.push(`<rect x="${(i + 9) * scale}" y="${10 * scale / 2}" width="${scale}" height="${(guard.has(i) ? H + 8 : H) }"/>`); });
+    const ty = H + 5 + 14;
+    const txt = text ? `<g font-family="ui-monospace,monospace" font-size="${7 * scale}" text-anchor="middle"><text x="${4 * scale}" y="${ty}">${full[0]}</text><text x="${(9 + 3 + 21) * scale}" y="${ty}" letter-spacing="${scale * 1.6}">${full.slice(1, 7)}</text><text x="${(9 + 50 + 21) * scale}" y="${ty}" letter-spacing="${scale * 1.6}">${full.slice(7)}</text></g>` : "";
+    return { svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${W * scale}" height="${H + (text ? 30 : 12)}" viewBox="0 0 ${W * scale} ${H + (text ? 30 : 12)}"><rect width="100%" height="100%" fill="#fff"/><g fill="#000">${rects.join("")}</g>${txt}</svg>`, label };
+  }
+  const widths = code128(value); let x = 10;
+  [...widths].forEach((w, i) => { if (i % 2 === 0) rects.push(`<rect x="${x * scale}" y="5" width="${+w * scale}" height="${H}"/>`); x += +w; });
+  W = x + 10;
+  const txt = text ? `<text x="50%" y="${H + 22}" font-family="ui-monospace,monospace" font-size="${Math.max(12, 6 * scale)}" text-anchor="middle">${esc(value)}</text>` : "";
+  return { svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${W * scale}" height="${H + (text ? 30 : 10)}" viewBox="0 0 ${W * scale} ${H + (text ? 30 : 10)}"><rect width="100%" height="100%" fill="#fff"/><g fill="#000">${rects.join("")}</g>${txt}</svg>`, label };
+}
+
+tool({
+  id: "barcode", cat: "daily", also: ["money"], fresh: true, icon: I.tally, name: "สร้างบาร์โค้ด (Code 128 / EAN-13)",
+  desc: "สร้างบาร์โค้ดสำหรับติดสินค้า สต็อก หรือป้ายราคา รองรับ Code 128 และ EAN-13 (คำนวณเลขตรวจสอบให้) โหลด PNG / SVG",
+  keywords: "barcode บาร์โค้ด code128 ean13 ean สินค้า สต็อก sku ป้ายราคา",
+  render(body) {
+    const ui = h(`<div><div class="tabs" id="k"><button class="chip active" data-k="c128">Code 128</button><button class="chip" data-k="ean">EAN-13</button></div>
+      <div class="field"><label for="v" id="vl">ข้อความหรือรหัสสินค้า</label><input class="input" id="v" value="LUM-2026-001" autocomplete="off" spellcheck="false" aria-describedby="vm"><small class="field-msg" id="vm"></small></div>
+      <div class="row"><div class="field"><label for="bh">ความสูง: <span id="bhv">90</span>px</label><input type="range" id="bh" min="40" max="200" value="90"></div><label class="check"><input type="checkbox" id="tx" checked>แสดงตัวเลขใต้บาร์โค้ด</label></div>
+      <div class="qr-box" id="box" style="background:#fff;padding:14px;border-radius:12px;overflow-x:auto"></div>
+      <div class="actions" style="justify-content:center"><button class="btn btn-gold" id="png">ดาวน์โหลด PNG</button><button class="btn btn-ghost" id="svg">SVG</button></div></div>`);
+    body.append(ui);
+    let kind = "c128", cur = null;
+    const run = () => {
+      const v = $("#v", ui).value.trim(), m = $("#vm", ui), H = +$("#bh", ui).value; $("#bhv", ui).textContent = H;
+      try {
+        if (!v) throw new Error("ใส่ข้อความหรือรหัสก่อน");
+        cur = barcodeSvg(kind, v, { h: H, text: $("#tx", ui).checked });
+        $("#box", ui).innerHTML = cur.svg; $("#box svg", ui).style.maxWidth = "100%"; $("#box svg", ui).style.height = "auto";
+        m.className = "field-msg"; m.textContent = kind === "ean" ? (v.replace(/\D/g, "").length === 12 ? `เติมเลขตรวจสอบให้แล้ว → ${cur.label}` : "เลขตรวจสอบถูกต้อง ✓") : `${v.length} ตัวอักษร`;
+      } catch (e) { cur = null; $("#box", ui).innerHTML = ""; m.className = "field-msg err"; m.textContent = e.message; }
+      $("#png", ui).disabled = $("#svg", ui).disabled = !cur; $("#box", ui).hidden = !cur;
+    };
+    $$("[data-k]", ui).forEach(b => b.onclick = () => {
+      kind = b.dataset.k; $$("[data-k]", ui).forEach(x => x.classList.toggle("active", x === b));
+      $("#vl", ui).textContent = kind === "ean" ? "ตัวเลข 12 หลัก (หรือ 13 หลักพร้อมเลขตรวจสอบ)" : "ข้อความหรือรหัสสินค้า";
+      $("#v", ui).inputMode = kind === "ean" ? "numeric" : "text";
+      if (kind === "ean" && !/^\d{12,13}$/.test($("#v", ui).value.trim())) $("#v", ui).value = "885000000001";
+      run();
+    });
+    $$("input", ui).forEach(e => e.oninput = run);
+    const name = () => "barcode-" + (cur.label || "").replace(/[^\w-]+/g, "_");
+    $("#svg", ui).onclick = () => download(new Blob([cur.svg], { type: "image/svg+xml" }), name() + ".svg");
+    $("#png", ui).onclick = async () => {
+      const img = new Image(); img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(cur.svg); await img.decode();
+      const c = document.createElement("canvas"), s = 3; c.width = img.width * s; c.height = img.height * s;
+      const x = c.getContext("2d"); x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, c.width, c.height);
+      download(await canvasBlob(c), name() + ".png");
+    };
+    run();
   },
 });

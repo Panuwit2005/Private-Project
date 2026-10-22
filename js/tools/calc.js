@@ -461,3 +461,107 @@ tool({
     draw();
   },
 });
+
+// ---------- Time zone converter ----------
+const TZ_LIST = [["Asia/Bangkok", "กรุงเทพฯ"], ["Asia/Tokyo", "โตเกียว"], ["Asia/Seoul", "โซล"], ["Asia/Shanghai", "ปักกิ่ง / เซี่ยงไฮ้"], ["Asia/Hong_Kong", "ฮ่องกง"], ["Asia/Taipei", "ไทเป"], ["Asia/Singapore", "สิงคโปร์"], ["Asia/Kuala_Lumpur", "กัวลาลัมเปอร์"], ["Asia/Ho_Chi_Minh", "โฮจิมินห์"], ["Asia/Jakarta", "จาการ์ตา"], ["Asia/Manila", "มะนิลา"], ["Asia/Kolkata", "อินเดีย"], ["Asia/Dubai", "ดูไบ"],
+  ["Europe/London", "ลอนดอน"], ["Europe/Paris", "ปารีส"], ["Europe/Berlin", "เบอร์ลิน"], ["Europe/Zurich", "ซูริก"], ["Europe/Moscow", "มอสโก"], ["America/New_York", "นิวยอร์ก"], ["America/Chicago", "ชิคาโก"], ["America/Denver", "เดนเวอร์"], ["America/Los_Angeles", "ลอสแอนเจลิส"], ["America/Sao_Paulo", "เซาเปาโล"], ["Australia/Sydney", "ซิดนีย์"], ["Pacific/Auckland", "โอ๊คแลนด์"], ["UTC", "UTC"]];
+// Offset (minutes) of a zone at a given instant, from Intl parts.
+function tzOffset(zone, date) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: zone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(date).map(x => [x.type, x.value]));
+  return Math.round((Date.UTC(+p.year, p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - date.getTime()) / 60000);
+}
+// Wall-clock time in a zone → instant. Two passes handle DST edges.
+function zonedToDate(zone, y, mo, d, hh, mm) {
+  const guess = Date.UTC(y, mo - 1, d, hh, mm);
+  let t = guess - tzOffset(zone, new Date(guess)) * 60000;
+  t = guess - tzOffset(zone, new Date(t)) * 60000;
+  return new Date(t);
+}
+tool({
+  id: "tz-convert", cat: "calc", also: ["daily"], fresh: true, icon: I.globe, name: "แปลงเวลาข้ามประเทศ",
+  desc: "ใส่วันเวลาของเมืองหนึ่ง ดูเวลาที่ตรงกันในหลายเมืองพร้อมกัน รองรับเวลาออมแสง เหมาะกับนัดประชุมหรือดูบอลต่างประเทศ",
+  keywords: "time zone converter เขตเวลา แปลงเวลา ต่างประเทศ ประชุม utc gmt เวลาญี่ปุ่น อังกฤษ อเมริกา",
+  render(body) {
+    const opts = TZ_LIST.map(([z, n]) => `<option value="${z}">${n}</option>`).join("");
+    const ui = h(`<div><div class="row" style="margin-top:0;align-items:flex-end"><div class="field"><label for="from">เวลาของ</label><select class="input" id="from">${opts}</select></div><div class="field"><label for="dt">วันและเวลา</label><input class="input" type="datetime-local" id="dt"></div><button class="btn btn-ghost btn-sm" id="now" style="flex:none">ตอนนี้</button></div>
+      <div class="field" style="margin-top:12px"><label>แสดงเมือง</label><div class="chips" id="cities">${TZ_LIST.map(([z, n]) => `<label class="chip-check"><input type="checkbox" value="${z}">${n}</label>`).join("")}</div></div>
+      <div class="data-list" id="out" style="margin-top:14px"></div></div>`);
+    body.append(ui);
+    const saved = store.get("tz-cities", ["Asia/Tokyo", "Europe/London", "America/New_York", "UTC"]);
+    $$("#cities input", ui).forEach(c => c.checked = saved.includes(c.value));
+    const setNow = () => { const d = new Date(), z = $("#from", ui).value, o = tzOffset(z, d), l = new Date(d.getTime() + o * 60000); $("#dt", ui).value = l.toISOString().slice(0, 16); };
+    const run = () => {
+      const z = $("#from", ui).value, v = $("#dt", ui).value;
+      if (!v) { $("#out", ui).innerHTML = `<div class="empty-hint"><b>ยังไม่ได้เลือกเวลา</b>เลือกวันเวลา หรือกด "ตอนนี้"</div>`; return; }
+      const [y, mo, d, hh, mm] = v.split(/[-T:]/).map(Number), at = zonedToDate(z, y, mo, d, hh, mm);
+      const cities = $$("#cities input", ui).filter(c => c.checked).map(c => c.value);
+      store.set("tz-cities", cities);
+      const base = tzOffset(z, at), dayKey = (zone) => new Intl.DateTimeFormat("en-CA", { timeZone: zone }).format(at);
+      $("#out", ui).innerHTML = [z, ...cities.filter(c => c !== z)].map(zone => {
+        const name = TZ_LIST.find(t => t[0] === zone)[1], off = tzOffset(zone, at), diff = (off - base) / 60;
+        const time = at.toLocaleTimeString("th-TH", { timeZone: zone, hour: "2-digit", minute: "2-digit" });
+        const date = at.toLocaleDateString("th-TH", { timeZone: zone, weekday: "short", day: "numeric", month: "short" });
+        const dd = dayKey(zone) > dayKey(z) ? " · วันถัดไป" : dayKey(zone) < dayKey(z) ? " · วันก่อนหน้า" : "";
+        const hour = +at.toLocaleString("en-US", { timeZone: zone, hour: "numeric", hourCycle: "h23" });
+        const night = hour < 7 || hour >= 22;
+        return `<div class="smart-item" style="cursor:default"><span class="smart-text"><b>${name}${zone === z ? " (ต้นทาง)" : ""}</b><small>${date}${dd} · UTC${off >= 0 ? "+" : "−"}${pad(Math.floor(Math.abs(off) / 60))}:${pad(Math.abs(off) % 60)}${zone === z ? "" : ` · ${diff >= 0 ? "+" : "−"}${Math.abs(diff)} ชม.`}${night ? " · 🌙 นอกเวลาทำงาน" : ""}</small></span><b style="font-size:1.4rem;font-weight:300;color:var(--color-accent-strong);font-variant-numeric:tabular-nums">${time}</b></div>`;
+      }).join("");
+    };
+    $("#now", ui).onclick = () => { setNow(); run(); };
+    $("#from", ui).onchange = () => { run(); };
+    $("#dt", ui).oninput = run; $$("#cities input", ui).forEach(c => c.onchange = run);
+    setNow(); run();
+  },
+});
+
+// ---------- Descriptive statistics ----------
+tool({
+  id: "stats", cat: "calc", also: ["invest"], fresh: true, icon: I.avg, name: "คำนวณสถิติ (เฉลี่ย มัธยฐาน SD)",
+  desc: "วางตัวเลขชุดหนึ่ง ได้ค่าเฉลี่ย มัธยฐาน ฐานนิยม ส่วนเบี่ยงเบนมาตรฐาน ควอไทล์ ค่าต่ำสุด–สูงสุด ในครั้งเดียว",
+  keywords: "statistics mean median mode standard deviation variance quartile สถิติ ค่าเฉลี่ย มัธยฐาน ฐานนิยม sd",
+  render(body) {
+    const ui = h(`<div><div class="field"><label for="src">ตัวเลข (คั่นด้วยเว้นวรรค จุลภาค หรือขึ้นบรรทัดใหม่)</label><textarea class="input" id="src" style="min-height:110px">12, 15, 18, 18, 22, 25, 31, 40</textarea></div>
+      <label class="check" style="margin-top:10px"><input type="checkbox" id="pop">เป็นข้อมูลทั้งประชากร (ไม่ใช่กลุ่มตัวอย่าง)</label><div class="kv" id="kv"></div></div>`);
+    body.append(ui);
+    const q = (s, p) => { const i = (s.length - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.min(lo + 1, s.length - 1)] - s[lo]) * (i - lo); };
+    const run = () => {
+      const xs = ($("#src", ui).value.match(/-?\d[\d,]*\.?\d*(?:e-?\d+)?|-?\.\d+/gi) || []).map(x => parseFloat(x.replace(/,(?=\d{3}\b)/g, ""))).filter(Number.isFinite);
+      if (xs.length < 1) { $("#kv", ui).innerHTML = `<div class="empty-hint" style="grid-column:1/-1"><b>ยังไม่มีตัวเลข</b>วางตัวเลขอย่างน้อย 1 ตัว</div>`; return; }
+      const n = xs.length, s = [...xs].sort((a, b) => a - b), sum = xs.reduce((a, b) => a + b, 0), mean = sum / n;
+      const ss = xs.reduce((a, x) => a + (x - mean) ** 2, 0), pop = $("#pop", ui).checked;
+      const v = n > 1 || pop ? ss / (pop ? n : n - 1) : 0, sd = Math.sqrt(v);
+      const freq = {}; xs.forEach(x => freq[x] = (freq[x] || 0) + 1); const top = Math.max(...Object.values(freq));
+      const modes = top > 1 ? Object.keys(freq).filter(k => freq[k] === top).map(Number) : [];
+      const f = (x) => nice(x);
+      $("#kv", ui).innerHTML = kvRows([["จำนวนข้อมูล", n], ["ผลรวม", f(sum)], ["ค่าเฉลี่ย", f(mean)], ["มัธยฐาน", f(q(s, .5))], ["ฐานนิยม", modes.length ? modes.map(f).join(", ") : "ไม่มี"],
+        [`ส่วนเบี่ยงเบนมาตรฐาน (${pop ? "σ" : "s"})`, f(sd)], ["ความแปรปรวน", f(v)], ["ต่ำสุด", f(s[0])], ["Q1 (25%)", f(q(s, .25))], ["Q3 (75%)", f(q(s, .75))], ["สูงสุด", f(s[n - 1])], ["พิสัย", f(s[n - 1] - s[0])],
+        ["CV", mean ? f(sd / Math.abs(mean) * 100) : "—", "%"]]);
+    };
+    $$("textarea,input", ui).forEach(e => e.oninput = run); run();
+  },
+});
+
+// ---------- Roman numerals ----------
+const ROMAN = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+const toRoman = (n) => ROMAN.reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, "");
+function fromRoman(s) {
+  s = s.toUpperCase().trim();
+  if (!/^[MDCLXVI]+$/.test(s)) return null;
+  let n = 0, i = 0;
+  for (const [v, r] of ROMAN) while (s.startsWith(r, i)) { n += v; i += r.length; }
+  return i === s.length && toRoman(n) === s ? n : null;
+}
+tool({
+  id: "roman", cat: "calc", also: ["text"], fresh: true, icon: I.calc, name: "แปลงเลขโรมัน",
+  desc: "แปลงตัวเลขเป็นเลขโรมัน (1–3999) และเลขโรมันกลับเป็นตัวเลข พร้อมตรวจว่าเขียนถูกหลักหรือไม่",
+  keywords: "roman numeral เลขโรมัน แปลง i v x l c d m",
+  render(body) {
+    const ui = h(`<div><div class="row" style="margin-top:0;align-items:flex-start"><div class="field"><label for="a">ตัวเลข</label><input class="input" id="a" type="number" min="1" max="3999" value="2026" inputmode="numeric"></div><div class="field"><label for="b">เลขโรมัน</label><input class="input" id="b" autocapitalize="characters" spellcheck="false" aria-describedby="bm"><small class="field-msg" id="bm"></small></div></div>
+      <div class="big sm" id="big" style="font-family:var(--font-display)"></div></div>`);
+    body.append(ui);
+    const msg = (t, err) => { $("#bm", ui).className = "field-msg" + (err ? " err" : ""); $("#bm", ui).textContent = t; };
+    $("#a", ui).oninput = () => { const n = Math.floor(num($("#a", ui).value)); if (n < 1 || n > 3999) { msg("รองรับ 1–3999", true); $("#big", ui).textContent = ""; return; } $("#b", ui).value = toRoman(n); $("#big", ui).textContent = toRoman(n); msg(""); };
+    $("#b", ui).oninput = () => { const n = fromRoman($("#b", ui).value); if (n === null) { msg($("#b", ui).value.trim() ? "เขียนเลขโรมันไม่ถูกหลัก" : "", true); $("#big", ui).textContent = ""; return; } $("#a", ui).value = n; $("#big", ui).textContent = n.toLocaleString(); msg(""); };
+    $("#a", ui).oninput();
+  },
+});

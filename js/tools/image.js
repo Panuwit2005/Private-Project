@@ -266,7 +266,7 @@ tool({
 });
 
 tool({
-  id: "img-redact", cat: "image", icon: I.stamp, name: "ปิดบังข้อมูลในรูป",
+  id: "img-redact", cat: "image", also: ["security"], icon: I.stamp, name: "ปิดบังข้อมูลในรูป",
   desc: "ลากคลุมส่วนที่ไม่อยากให้เห็น เช่น เลขบัญชี ชื่อ หน้า หรือป้ายทะเบียน แล้วเบลอ ทำโมเสก หรือปิดแถบดำ",
   keywords: "blur pixelate redact censor เบลอ โมเสก ปิดข้อมูล ปิดหน้า สลิป แคปจอ",
   render(body) {
@@ -417,5 +417,81 @@ tool({
     $("#ar", ui).onclick = e => { const b = e.target.closest("[data-r]"); if (!b) return; ar = +b.dataset.r; $$("#ar .chip", ui).forEach(x => x.classList.toggle("active", x === b)); draw(); };
     $$("input, select", ui).forEach(i => i.oninput = () => { $("#pv", ui).textContent = $("#pd", ui).value; draw(); });
     $("#save", ui).onclick = async () => download(await canvasBlob(cv, "image/jpeg", .92), baseName(file.name) + "_framed.jpg");
+  },
+});
+
+// ---------- Split image into a grid ----------
+tool({
+  id: "img-split", cat: "image", also: ["creator"], fresh: true, icon: I.grid, name: "ตัดรูปเป็นตาราง (IG Grid)",
+  desc: "แบ่งรูปเป็น 3×1, 3×3 หรือกำหนดเอง สำหรับโพสต์ต่อกันเป็นภาพใหญ่บน Instagram หรือทำสติกเกอร์ ได้ไฟล์ ZIP เรียงลำดับโพสต์ให้แล้ว",
+  keywords: "split image grid instagram ig panorama ตัดรูป แบ่งรูป ตาราง 3x3 carousel",
+  render(body) {
+    const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label for="c">คอลัมน์</label><input class="input" type="number" id="c" min="1" max="10" value="3" inputmode="numeric"></div><div class="field"><label for="r">แถว</label><input class="input" type="number" id="r" min="1" max="10" value="3" inputmode="numeric"></div>
+      <div class="field"><label for="sq">สัดส่วนแต่ละช่อง</label><select class="input" id="sq"><option value="orig">ตามรูปเดิม</option><option value="1">จัตุรัส 1:1 (ครอปกลาง)</option><option value="0.8">IG 4:5 (ครอปกลาง)</option></select></div></div>
+      <div class="actions"><button class="chip" data-p="3,1">3×1 พาโนรามา</button><button class="chip" data-p="3,3">3×3</button><button class="chip" data-p="2,2">2×2</button><button class="chip" data-p="3,2">3×2</button></div>
+      <div class="canvas-wrap" hidden id="wrap"><canvas id="cv" style="max-width:100%"></canvas></div>
+      <div class="actions" id="acts" hidden><button class="btn btn-gold" id="zip">ดาวน์โหลด ZIP</button></div><div class="status" id="st"></div></div>`);
+    let img = null;
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูปที่จะตัด", hint: "PNG, JPG, WebP" }, async ([f]) => { img = await loadImage(f); img.fname = baseName(f.name); draw(); }), ui);
+    const geom = () => {
+      const C = Math.max(1, Math.min(10, +$("#c", ui).value || 1)), R = Math.max(1, Math.min(10, +$("#r", ui).value || 1)), ratio = $("#sq", ui).value;
+      let W = img.naturalWidth, H = img.naturalHeight, x = 0, y = 0;
+      if (ratio !== "orig") { const want = C / (R * (1 / +ratio)) ; if (W / H > want) { const nw = H * want; x = (W - nw) / 2; W = nw; } else { const nh = W / want; y = (H - nh) / 2; H = nh; } }
+      return { C, R, x, y, W, H, cw: Math.floor(W / C), ch: Math.floor(H / R) };
+    };
+    const draw = () => {
+      if (!img) return;
+      const g = geom(), cv = $("#cv", ui), ctx = cv.getContext("2d"), s = Math.min(1, 900 / g.W);
+      cv.width = g.W * s; cv.height = g.H * s;
+      ctx.drawImage(img, g.x, g.y, g.W, g.H, 0, 0, cv.width, cv.height);
+      ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+      ctx.font = `600 ${Math.max(14, cv.width / g.C / 7)}px system-ui`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      for (let i = 1; i < g.C; i++) { ctx.beginPath(); ctx.moveTo(cv.width * i / g.C, 0); ctx.lineTo(cv.width * i / g.C, cv.height); ctx.stroke(); }
+      for (let j = 1; j < g.R; j++) { ctx.beginPath(); ctx.moveTo(0, cv.height * j / g.R); ctx.lineTo(cv.width, cv.height * j / g.R); ctx.stroke(); }
+      // Instagram shows the newest post top-left, so the posting order is the reverse of reading order.
+      for (let j = 0; j < g.R; j++) for (let i = 0; i < g.C; i++) {
+        const n = g.C * g.R - (j * g.C + i), cx = cv.width * (i + .5) / g.C, cy = cv.height * (j + .5) / g.R;
+        ctx.fillStyle = "rgba(0,0,0,.55)"; ctx.beginPath(); ctx.arc(cx, cy, Math.max(16, cv.width / g.C / 9), 0, 7); ctx.fill(); ctx.fillStyle = "#fff"; ctx.fillText(n, cx, cy);
+      }
+      $("#wrap", ui).hidden = false; $("#acts", ui).hidden = false;
+      setStatus($("#st", ui), `${g.C * g.R} ชิ้น · ชิ้นละ ${g.cw}×${g.ch}px · ตัวเลข = ลำดับการโพสต์ (โพสต์ 1 ก่อน)`);
+    };
+    $$("[data-p]", ui).forEach(b => b.onclick = () => { const [c, r] = b.dataset.p.split(","); $("#c", ui).value = c; $("#r", ui).value = r; draw(); });
+    $$("input,select", ui).forEach(e => e.oninput = draw);
+    $("#zip", ui).onclick = async () => {
+      const g = geom(), out = [], c = document.createElement("canvas"); c.width = g.cw; c.height = g.ch;
+      setStatus($("#st", ui), "กำลังตัด…");
+      for (let j = 0; j < g.R; j++) for (let i = 0; i < g.C; i++) {
+        c.getContext("2d").drawImage(img, g.x + i * g.cw, g.y + j * g.ch, g.cw, g.ch, 0, 0, g.cw, g.ch);
+        const n = g.C * g.R - (j * g.C + i);
+        out.push({ blob: await canvasBlob(c, "image/jpeg", .95), name: `${img.fname}_post${pad(n)}_r${j + 1}c${i + 1}.jpg` });
+      }
+      download(await zipBlob(out), `${img.fname}_grid.zip`); setStatus($("#st", ui), `ตัดเป็น ${out.length} ชิ้นแล้ว ✓`);
+    };
+  },
+});
+
+// ---------- Placeholder image ----------
+tool({
+  id: "placeholder", cat: "image", also: ["dev"], fresh: true, icon: I.image, name: "สร้างรูปตัวอย่าง (Placeholder)",
+  desc: "สร้างรูปขนาดที่ต้องการพร้อมข้อความและสี สำหรับวางเลย์เอาต์หรือม็อกอัป โหลดเป็น PNG / SVG หรือคัดลอก Data URI",
+  keywords: "placeholder image dummy รูปตัวอย่าง mockup svg png ขนาด",
+  render(body) {
+    const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label for="w">กว้าง (px)</label><input class="input" type="number" id="w" value="1200" min="1" max="8000" inputmode="numeric"></div><div class="field"><label for="hh">สูง (px)</label><input class="input" type="number" id="hh" value="630" min="1" max="8000" inputmode="numeric"></div></div>
+      <div class="actions"><button class="chip" data-s="1200x630">OG 1200×630</button><button class="chip" data-s="1080x1080">IG 1080²</button><button class="chip" data-s="1080x1920">Story 1080×1920</button><button class="chip" data-s="1280x720">720p</button><button class="chip" data-s="300x250">โฆษณา 300×250</button></div>
+      <div class="row"><div class="field"><label for="tx">ข้อความ (เว้นว่าง = ขนาด)</label><input class="input" id="tx"></div><div class="field" style="max-width:110px"><label for="bg">พื้น</label><input class="input" type="color" id="bg" value="#2a2520"></div><div class="field" style="max-width:110px"><label for="fg">ตัวอักษร</label><input class="input" type="color" id="fg" value="#d8b46a"></div></div>
+      <div class="canvas-wrap" style="margin-top:14px"><canvas id="cv" style="max-width:100%;border-radius:10px"></canvas></div>
+      <div class="actions"><button class="btn btn-gold btn-sm" id="png">PNG</button><button class="btn btn-ghost btn-sm" id="svg">SVG</button><button class="btn btn-ghost btn-sm" id="uri">คัดลอก Data URI (SVG)</button></div></div>`);
+    body.append(ui);
+    const g = () => { const W = Math.min(8000, Math.max(1, Math.round(num($("#w", ui).value)) || 1)), H = Math.min(8000, Math.max(1, Math.round(num($("#hh", ui).value)) || 1)); return { W, H, t: $("#tx", ui).value.trim() || `${W} × ${H}`, bg: $("#bg", ui).value, fg: $("#fg", ui).value }; };
+    const svg = () => { const { W, H, t, bg, fg } = g(), fs = Math.round(Math.min(W / Math.max(4, [...t].length) * 1.4, H / 4)); return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="100%" height="100%" fill="${bg}"/><text x="50%" y="50%" fill="${fg}" font-family="system-ui,sans-serif" font-size="${fs}" font-weight="600" text-anchor="middle" dominant-baseline="central">${esc(t)}</text></svg>`; };
+    const paint = (cv, scale = 1) => { const { W, H, t, bg, fg } = g(), fs = Math.min(W / Math.max(4, [...t].length) * 1.4, H / 4); cv.width = W * scale; cv.height = H * scale; const c = cv.getContext("2d"); c.scale(scale, scale); c.fillStyle = bg; c.fillRect(0, 0, W, H); c.fillStyle = fg; c.font = `600 ${fs}px system-ui, sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(t, W / 2, H / 2); };
+    const run = () => { const { W } = g(); paint($("#cv", ui), Math.min(1, 800 / W)); };
+    $$("[data-s]", ui).forEach(b => b.onclick = () => { const [w, hh] = b.dataset.s.split("x"); $("#w", ui).value = w; $("#hh", ui).value = hh; run(); });
+    $$("input", ui).forEach(e => e.oninput = run);
+    $("#png", ui).onclick = async () => { const c = document.createElement("canvas"); paint(c); const { W, H } = g(); download(await canvasBlob(c), `placeholder-${W}x${H}.png`); };
+    $("#svg", ui).onclick = () => { const { W, H } = g(); download(new Blob([svg()], { type: "image/svg+xml" }), `placeholder-${W}x${H}.svg`); };
+    $("#uri", ui).onclick = () => copy("data:image/svg+xml," + encodeURIComponent(svg()));
+    run();
   },
 });

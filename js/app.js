@@ -139,6 +139,10 @@ const I = {
   scan: icon('<path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/>'),
   palette: icon('<path d="M12 22a10 10 0 1 1 10-10c0 3-2.5 4-4.5 4H15a2 2 0 0 0-1.5 3.3A2 2 0 0 1 12 22z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="16.5" cy="10.5" r="1"/>'),
   calendar: icon('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'),
+  home: icon('<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'),
+  tools: icon('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>'),
+  search: icon('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+  sparkle: icon('<path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/>'),
   convert: icon('<path d="M4 7h13l-3-3M20 17H7l3 3"/><rect x="2" y="10" width="6" height="4" rx="1"/><rect x="16" y="10" width="6" height="4" rx="1"/>'),
   clapper: icon('<path d="M4 11v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8H4z"/><path d="m4 11-.9-3.5a2 2 0 0 1 1.4-2.4l11.6-3a2 2 0 0 1 2.4 1.4L19.4 7 4 11zM6.2 6.2l3.1 3.9M12.4 4.6l3.1 3.9"/>'),
   trend: icon('<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 6-7"/><path d="M15 7h5v5"/>'),
@@ -182,7 +186,19 @@ const CATS = [
   { id: "daily", name: "ประจำวัน", icon: I.check, desc: "โน้ต งาน ตั้งเวลา สุ่ม QR และเครื่องมือใช้ทุกวัน" },
   { id: "dev", name: "นักพัฒนา", icon: I.code, desc: "JSON, Base64, Hash, Regex และเครื่องมือโปรแกรมเมอร์" },
 ];
+CATS.push(
+  { id: "security", name: "ความปลอดภัย & ส่วนตัว", icon: I.key, desc: "รหัสผ่าน เข้ารหัสข้อความ ลบตำแหน่ง GPS ในรูป และปิดบังข้อมูลก่อนส่ง" },
+  { id: "web", name: "เว็บ & SEO", icon: I.globe, desc: "meta tag, OGP, robots.txt, sitemap, IP/CIDR, โดเมนภาษาไทย และรหัสสถานะ HTTP" },
+  { id: "fun", name: "เกม & สนุก", icon: I.dice, desc: "สุ่ม จับฉลาก วงล้อ ทดสอบความเร็วพิมพ์ และเวลาตอบสนอง" },
+);
 const catById = (id) => CATS.find(c => c.id === id);
+
+// ---------- Sections ----------
+// Top level of the site. "tools" is built in; a future section (movies, football, embeds…) registers
+// itself with section({ id, name, icon, desc, stats?(), render(el) }) and gets a home card, a nav tab
+// and the route #/<id> automatically.
+const SECTIONS = [];
+function section(def) { SECTIONS.push(def); }
 const TOOLS = [];
 // def: { id, cat, also?: [extra category ids], icon, name, desc, keywords, render(body) }
 // render(body) builds the UI; it may return a cleanup function called when the tool closes.

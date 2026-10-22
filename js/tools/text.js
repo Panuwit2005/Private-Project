@@ -340,3 +340,116 @@ tool({
     run();
   },
 });
+
+// ---------- Extract data from text ----------
+const EXTRACTORS = [
+  ["email", "อีเมล", /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g],
+  ["url", "ลิงก์", /https?:\/\/[^\s<>"'()]+[^\s<>"'().,;:!?]/g],
+  ["phone", "เบอร์โทร", /(?:\+66[\s-]?|0)(?:[689]\d[\s-]?\d{3}[\s-]?\d{4}|2[\s-]?\d{3}[\s-]?\d{4})\b/g],
+  ["id13", "เลขบัตรประชาชน", /\b\d[\s-]?\d{4}[\s-]?\d{5}[\s-]?\d{2}[\s-]?\d\b/g],
+  ["hashtag", "แฮชแท็ก", /#[\p{L}\p{M}\p{N}_]+/gu],
+  ["mention", "@ผู้ใช้", /(?<![\w.])@[\w.]{2,30}\b/g],
+  ["ip", "IP", /\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b/g],
+  ["number", "ตัวเลข", /-?\d[\d,]*(?:\.\d+)?/g],
+];
+tool({
+  id: "extract-data", cat: "text", fresh: true, icon: I.list, name: "ดึงอีเมล ลิงก์ เบอร์โทร ออกจากข้อความ",
+  desc: "วางข้อความยาว ๆ แล้วแยกอีเมล ลิงก์ เบอร์โทร แฮชแท็ก ตัวเลข ออกมาเป็นรายการ ตัดตัวซ้ำ คัดลอกหรือโหลดเป็น CSV ได้",
+  keywords: "extract email url phone hashtag number ดึง แยก อีเมล ลิงก์ เบอร์โทร csv",
+  render(body) {
+    const ui = h(`<div><div class="field"><label for="src">ข้อความต้นฉบับ</label><textarea class="input" id="src" style="min-height:150px;font-family:var(--font-body)" placeholder="วางข้อความ แชต อีเมล หรือหน้าเว็บที่คัดลอกมา…"></textarea></div>
+      <div class="actions"><label class="check"><input type="checkbox" id="uniq" checked>ตัดรายการซ้ำ</label><label class="check"><input type="checkbox" id="sort">เรียงลำดับ</label></div>
+      <div class="tabs" id="kinds" role="tablist"></div><div id="res"></div></div>`);
+    body.append(ui);
+    let kind = "email";
+    const run = () => {
+      const s = $("#src", ui).value, uniq = $("#uniq", ui).checked, srt = $("#sort", ui).checked;
+      const found = Object.fromEntries(EXTRACTORS.map(([k, , re]) => {
+        let m = s.match(re) || [];
+        if (k === "number") m = m.filter(x => /\d/.test(x));
+        if (uniq) m = [...new Set(m)];
+        if (srt) m = [...m].sort((a, b) => k === "number" ? num(a) - num(b) : a.localeCompare(b, "th"));
+        return [k, m];
+      }));
+      $("#kinds", ui).innerHTML = EXTRACTORS.map(([k, n]) => `<button class="chip${k === kind ? " active" : ""}" data-k="${k}" role="tab" aria-selected="${k === kind}">${n} <span class="chip-n">${found[k].length}</span></button>`).join("");
+      $$("[data-k]", ui).forEach(b => b.onclick = () => { kind = b.dataset.k; run(); });
+      const items = found[kind], label = EXTRACTORS.find(e => e[0] === kind)[1];
+      $("#res", ui).innerHTML = !s.trim() ? `<div class="empty-hint"><b>ยังไม่มีข้อความ</b>วางข้อความด้านบน แล้วเลือกชนิดข้อมูลที่ต้องการ</div>`
+        : !items.length ? `<div class="empty-hint"><b>ไม่พบ${label}</b>ลองเลือกชนิดอื่นด้านบน</div>`
+        : `<textarea class="input" id="out" readonly style="min-height:140px">${esc(items.join("\n"))}</textarea><div class="actions"><button class="btn btn-gold btn-sm" id="cp">คัดลอก ${items.length} รายการ</button><button class="btn btn-ghost btn-sm" id="csv">โหลด CSV</button></div>`;
+      if (items.length) {
+        $("#cp", ui).onclick = () => copy(items.join("\n"));
+        $("#csv", ui).onclick = () => download(new Blob(["﻿" + label + "\n" + items.map(x => `"${x.replace(/"/g, '""')}"`).join("\n")], { type: "text/csv" }), `extract-${kind}.csv`);
+      }
+    };
+    $$("textarea,input", ui).forEach(e => e.oninput = run);
+    run();
+  },
+});
+
+// ---------- Text ⇄ binary / hex / decimal / Unicode / Morse ----------
+const MORSE = { a: ".-", b: "-...", c: "-.-.", d: "-..", e: ".", f: "..-.", g: "--.", h: "....", i: "..", j: ".---", k: "-.-", l: ".-..", m: "--", n: "-.", o: "---", p: ".--.", q: "--.-", r: ".-.", s: "...", t: "-", u: "..-", v: "...-", w: ".--", x: "-..-", y: "-.--", z: "--..",
+  0: "-----", 1: ".----", 2: "..---", 3: "...--", 4: "....-", 5: ".....", 6: "-....", 7: "--...", 8: "---..", 9: "----.", ".": ".-.-.-", ",": "--..--", "?": "..--..", "!": "-.-.--", "/": "-..-.", "@": ".--.-.", "-": "-....-", "(": "-.--.", ")": "-.--.-", ":": "---...", "=": "-...-", "+": ".-.-.", "'": ".----.", '"': ".-..-." };
+const MORSE_R = Object.fromEntries(Object.entries(MORSE).map(([k, v]) => [v, k]));
+const utf8 = (s) => [...new TextEncoder().encode(s)];
+const ENCODINGS = {
+  bin: { name: "Binary", enc: (s) => utf8(s).map(b => b.toString(2).padStart(8, "0")).join(" "), dec: (s) => new TextDecoder().decode(new Uint8Array(s.trim().split(/\s+/).map(x => parseInt(x, 2)))) },
+  hex: { name: "HEX", enc: (s) => utf8(s).map(b => b.toString(16).padStart(2, "0")).join(" "), dec: (s) => new TextDecoder().decode(new Uint8Array((s.replace(/0x|[^0-9a-f]/gi, "").match(/../g) || []).map(x => parseInt(x, 16)))) },
+  dec: { name: "Decimal (UTF-8)", enc: (s) => utf8(s).join(" "), dec: (s) => new TextDecoder().decode(new Uint8Array(s.trim().split(/[\s,]+/).map(Number))) },
+  uni: { name: "Unicode \\u", enc: (s) => [...s].map(c => { const cp = c.codePointAt(0); return cp < 128 ? c : cp > 0xFFFF ? `\\u{${cp.toString(16)}}` : "\\u" + cp.toString(16).padStart(4, "0"); }).join(""),
+    dec: (s) => s.replace(/\\u\{([0-9a-f]+)\}|\\u([0-9a-f]{4})|U\+([0-9a-f]{4,6})/gi, (_, a, b, c) => String.fromCodePoint(parseInt(a || b || c, 16))) },
+  ent: { name: "HTML entity", enc: (s) => [...s].map(c => c.codePointAt(0) < 128 ? esc(c) : `&#${c.codePointAt(0)};`).join(""),
+    dec: (s) => { const t = document.createElement("textarea"); t.innerHTML = s; return t.value; } },
+  morse: { name: "Morse", enc: (s) => s.toLowerCase().split(/\s+/).filter(Boolean).map(w => [...w].map(c => MORSE[c] || "").filter(Boolean).join(" ")).join(" / "),
+    dec: (s) => s.trim().split(/\s*\/\s*|\s{3,}/).map(w => w.split(/\s+/).map(c => MORSE_R[c] || "").join("")).join(" ") },
+};
+tool({
+  id: "text-encode", cat: "text", also: ["dev"], fresh: true, icon: I.binary, name: "แปลงข้อความ ⇄ Binary / HEX / Unicode / Morse",
+  desc: "แปลงข้อความ (รองรับภาษาไทย) เป็นเลขฐานสอง ฐานสิบหก รหัส Unicode HTML entity หรือรหัสมอร์ส และแปลงกลับ",
+  keywords: "binary hex decimal unicode morse html entity encode decode ฐานสอง ฐานสิบหก รหัสมอร์ส แปลง",
+  render(body) {
+    const ui = h(`<div><div class="tabs" id="k">${Object.entries(ENCODINGS).map(([k, e], i) => `<button class="chip${i ? "" : " active"}" data-k="${k}">${e.name}</button>`).join("")}</div>
+      <div class="field"><label for="a">ข้อความ</label><textarea class="input" id="a" style="min-height:100px;font-family:var(--font-body)">สวัสดี Hello</textarea></div>
+      <div class="field" style="margin-top:12px"><label for="b" id="bl">Binary</label><textarea class="input" id="b" style="min-height:100px"></textarea><small class="field-msg" id="bm">แก้ช่องไหนก็ได้ อีกช่องจะแปลงตามทันที</small></div>
+      <div class="actions"><button class="btn btn-ghost btn-sm" id="ca">คัดลอกข้อความ</button><button class="btn btn-ghost btn-sm" id="cb">คัดลอกผลแปลง</button></div></div>`);
+    body.append(ui);
+    let k = "bin";
+    const fwd = () => { $("#b", ui).value = ENCODINGS[k].enc($("#a", ui).value); $("#bm", ui).className = "field-msg"; $("#bm", ui).textContent = "แก้ช่องไหนก็ได้ อีกช่องจะแปลงตามทันที"; };
+    const back = () => { try { $("#a", ui).value = ENCODINGS[k].dec($("#b", ui).value); $("#bm", ui).className = "field-msg"; } catch { $("#bm", ui).className = "field-msg err"; $("#bm", ui).textContent = "รูปแบบไม่ถูกต้อง แปลงกลับไม่ได้"; } };
+    $$("[data-k]", ui).forEach(b => b.onclick = () => { k = b.dataset.k; $$("[data-k]", ui).forEach(x => x.classList.toggle("active", x === b)); $("#bl", ui).textContent = ENCODINGS[k].name; fwd(); });
+    $("#a", ui).oninput = fwd; $("#b", ui).oninput = back;
+    $("#ca", ui).onclick = () => copy($("#a", ui).value); $("#cb", ui).onclick = () => copy($("#b", ui).value);
+    fwd();
+  },
+});
+
+// ---------- Lorem ipsum / Thai dummy text ----------
+const LOREM_EN = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum".split(" ");
+const LOREM_TH = "การ ออกแบบ ที่ดี ช่วย ให้ ผู้ใช้ เข้าใจ ได้ ง่าย ข้อความ ตัวอย่าง นี้ ใช้ สำหรับ ทดลอง วาง เนื้อหา บน หน้า เว็บไซต์ และ เอกสาร ต่าง ๆ โดย ไม่มี ความหมาย เฉพาะ เจาะจง ระบบ บริการ ลูกค้า ข้อมูล สินค้า ราคา พิเศษ วันนี้ เท่านั้น ติดต่อ สอบถาม รายละเอียด เพิ่มเติม ได้ ตลอด เวลา คุณภาพ มาตรฐาน ประสบการณ์ ทีมงาน มืออาชีพ".split(" ");
+tool({
+  id: "lorem", cat: "text", also: ["dev"], fresh: true, icon: I.text, name: "สร้างข้อความตัวอย่าง (Lorem ipsum / ไทย)",
+  desc: "สร้างข้อความหลอกภาษาไทยหรือ Lorem ipsum ตามจำนวนย่อหน้า ประโยค หรือคำ สำหรับวางเลย์เอาต์",
+  keywords: "lorem ipsum dummy text placeholder ข้อความตัวอย่าง ข้อความหลอก ไทย",
+  render(body) {
+    const ui = h(`<div><div class="row" style="margin-top:0"><div class="field"><label for="lg">ภาษา</label><select class="input" id="lg"><option value="th">ภาษาไทย</option><option value="en">Lorem ipsum</option></select></div>
+      <div class="field"><label for="n">จำนวน</label><input class="input" id="n" type="number" min="1" max="50" value="3" inputmode="numeric"></div>
+      <div class="field"><label for="u">หน่วย</label><select class="input" id="u"><option value="p">ย่อหน้า</option><option value="s">ประโยค</option><option value="w">คำ</option></select></div></div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="html">ครอบด้วย &lt;p&gt;</label>
+      ${codeOut("out", 10)}<div class="actions"><button class="btn btn-gold btn-sm" id="cp">คัดลอก</button><button class="btn btn-ghost btn-sm" id="re">สุ่มใหม่</button></div><p class="hint" id="cnt"></p></div>`);
+    body.append(ui);
+    const run = () => {
+      const th = $("#lg", ui).value === "th", W = th ? LOREM_TH : LOREM_EN, n = Math.min(50, Math.max(1, Math.round(num($("#n", ui).value)) || 1)), u = $("#u", ui).value;
+      const pick = () => W[Math.floor(Math.random() * W.length)];
+      const words = (k) => Array.from({ length: k }, pick);
+      const sentence = () => { const w = words(6 + Math.floor(Math.random() * 8)); return th ? w.join("") : (w.join(" ").replace(/^./, c => c.toUpperCase()) + "."); };
+      const para = () => Array.from({ length: 3 + Math.floor(Math.random() * 3) }, sentence).join(th ? " " : " ");
+      let parts = u === "p" ? Array.from({ length: n }, para) : u === "s" ? [Array.from({ length: n }, sentence).join(" ")] : [th ? words(n).join("") : words(n).join(" ")];
+      if (!th && u === "p") parts[0] = "Lorem ipsum dolor sit amet, " + parts[0].replace(/^./, c => c.toLowerCase());
+      const out = $("#html", ui).checked ? parts.map(p => `<p>${p}</p>`).join("\n") : parts.join("\n\n");
+      $("#out", ui).value = out; $("#cnt", ui).textContent = `${[...out].length.toLocaleString()} ตัวอักษร`;
+    };
+    $$("select,input", ui).forEach(e => e.oninput = run);
+    $("#re", ui).onclick = run; $("#cp", ui).onclick = () => copy($("#out", ui).value);
+    run();
+  },
+});

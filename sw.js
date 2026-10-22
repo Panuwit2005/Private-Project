@@ -1,12 +1,12 @@
 // Offline support: precache the app shell, then serve same-origin files from cache
 // while refreshing them in the background (stale-while-revalidate).
 // Bump VERSION whenever files change so clients pick up the new set.
-const VERSION = "lumiere-v7";
+const VERSION = "lumiere-v8";
 const SHELL = [
   "./", "index.html", "style-guide.html", "css/tokens.css", "css/app.css", "manifest.webmanifest",
   "js/app.js", "js/main.js",
   "js/tools/money.js", "js/tools/assist.js", "js/tools/convert.js", "js/tools/creator.js", "js/tools/invest.js", "js/tools/image.js", "js/tools/media.js", "js/tools/docs.js", "js/tools/text.js",
-  "js/tools/dev.js", "js/tools/calc.js", "js/tools/daily.js",
+  "js/tools/dev.js", "js/tools/calc.js", "js/tools/daily.js", "js/tools/web.js", "js/tools/security.js", "js/tools/fun.js",
   "vendor/lame.min.js", "vendor/jspdf.umd.min.js", "vendor/qrcode.js",
   "vendor/pdf-lib.min.js", "vendor/jsQR.js", "vendor/marked.min.js",
   "vendor/pdf.min.js", "vendor/pdf.worker.min.js",
