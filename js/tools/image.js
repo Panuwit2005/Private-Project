@@ -1,0 +1,208 @@
+// Image tools: convert/compress, resize, crop/rotate, watermark, pick colors from a photo.
+
+tool({
+  id: "img-convert", cat: "รูปภาพ", icon: I.image, name: "แปลง & บีบอัดรูปภาพ",
+  desc: "แปลง JPG, PNG, WEBP ไปมา ปรับคุณภาพเพื่อลดขนาดไฟล์ และลบข้อมูล EXIF/GPS ออกอัตโนมัติ",
+  keywords: "convert jpg png webp heic image compress บีบอัด exif gps",
+  render(body) {
+    let files = [];
+    const fmt = h(`<div class="row">
+      <div class="field"><label>แปลงเป็น</label><select class="input" id="fmt"><option value="image/webp">WEBP</option><option value="image/jpeg">JPG</option><option value="image/png">PNG</option></select></div>
+      <div class="field"><label>คุณภาพ: <span id="qv">85</span>%</label><input type="range" id="qq" min="10" max="100" value="85" /></div>
+    </div>`);
+    const list = h(`<div class="out"></div>`);
+    const act = h(`<div class="actions"><button class="btn btn-gold" id="go" disabled>แปลงไฟล์</button><button class="btn btn-ghost" id="all" hidden>ดาวน์โหลดทั้งหมด</button></div>`);
+    body.append(dropZone({ accept: "image/*", multiple: true, title: "ลากรูปมาวาง หรือแตะเพื่อเลือก", hint: "JPG · PNG · WEBP · GIF · BMP · SVG · AVIF" }, f => {
+      files = f; $("#go", act).disabled = false; $("#all", act).hidden = true;
+      list.innerHTML = files.map(x => `<div class="file-item"><div class="meta"><b>${esc(x.name)}</b><small>${fmtSize(x.size)}</small></div></div>`).join("");
+    }), fmt, act, list);
+    $("#qq", fmt).oninput = e => $("#qv", fmt).textContent = e.target.value;
+    let results = [];
+    $("#go", act).onclick = async () => {
+      const type = $("#fmt", fmt).value, q = $("#qq", fmt).value / 100;
+      const ext = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" }[type];
+      list.innerHTML = ""; results = [];
+      for (const f of files) {
+        try {
+          const img = await loadImage(f);
+          const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+          const ctx = c.getContext("2d");
+          if (type === "image/jpeg") { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); }
+          ctx.drawImage(img, 0, 0);
+          const blob = await canvasBlob(c, type, q);
+          const name = baseName(f.name) + "." + ext;
+          const diff = Math.round((1 - blob.size / f.size) * 100);
+          results.push([blob, name]);
+          const row = h(`<div class="file-item"><img src="${img.src}" alt=""><div class="meta"><b>${esc(name)}</b><small>${fmtSize(f.size)} → ${fmtSize(blob.size)} <span class="saving">${diff > 0 ? "(-" + diff + "%)" : ""}</span></small></div><button class="btn btn-ghost btn-sm">บันทึก</button></div>`);
+          $("button", row).onclick = () => download(blob, name);
+          list.append(row);
+        } catch (e) { list.append(h(`<div class="status err">${esc(e.message)}</div>`)); }
+      }
+      $("#all", act).hidden = results.length < 2;
+    };
+    $("#all", act).onclick = async () => { for (const [b, n] of results) { download(b, n); await new Promise(r => setTimeout(r, 350)); } };
+  },
+});
+
+tool({
+  id: "img-resize", cat: "รูปภาพ", icon: I.resize, name: "ปรับขนาดรูปภาพ",
+  desc: "ย่อหรือขยายรูปตามพิกเซลหรือเปอร์เซ็นต์ คงสัดส่วนเดิมอัตโนมัติ",
+  keywords: "resize scale ย่อ ขยาย pixel",
+  render(body) {
+    let img, file;
+    const ctrls = h(`<div><div class="row">
+      <div class="field"><label>กว้าง (px)</label><input class="input" type="number" id="w" min="1" /></div>
+      <div class="field"><label>สูง (px)</label><input class="input" type="number" id="hh" min="1" /></div>
+      <div class="field" style="flex:0 0 auto"><label class="check"><input type="checkbox" id="lock" checked /> ล็อกสัดส่วน</label></div>
+    </div>
+    <div class="actions"><button class="btn btn-ghost btn-sm" data-p="25">25%</button><button class="btn btn-ghost btn-sm" data-p="50">50%</button><button class="btn btn-ghost btn-sm" data-p="75">75%</button><button class="btn btn-ghost btn-sm" data-p="200">200%</button><button class="btn btn-ghost btn-sm" data-px="1080">กว้าง 1080</button><button class="btn btn-ghost btn-sm" data-px="1920">กว้าง 1920</button></div>
+    <div class="actions"><button class="btn btn-gold" id="go" disabled>ปรับขนาดและบันทึก</button></div><div class="status" id="st"></div></div>`);
+    const w = $("#w", ctrls), hh = $("#hh", ctrls), lock = $("#lock", ctrls);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูปภาพ", hint: "รองรับไฟล์รูปทุกชนิดที่เบราว์เซอร์เปิดได้" }, async ([f]) => {
+      try {
+        img = await loadImage(f); file = f;
+        w.value = img.naturalWidth; hh.value = img.naturalHeight;
+        setStatus($("#st", ctrls), `ขนาดเดิม ${img.naturalWidth} × ${img.naturalHeight} px — ${f.name}`);
+        $("#go", ctrls).disabled = false;
+      } catch (e) { setStatus($("#st", ctrls), e.message, true); }
+    }), ctrls);
+    const ratio = () => img.naturalWidth / img.naturalHeight;
+    w.oninput = () => { if (img && lock.checked) hh.value = Math.round(w.value / ratio()); };
+    hh.oninput = () => { if (img && lock.checked) w.value = Math.round(hh.value * ratio()); };
+    $$("[data-p]", ctrls).forEach(b => b.onclick = () => {
+      if (!img) return; const p = b.dataset.p / 100;
+      w.value = Math.round(img.naturalWidth * p); hh.value = Math.round(img.naturalHeight * p);
+    });
+    $$("[data-px]", ctrls).forEach(b => b.onclick = () => { if (!img) return; w.value = b.dataset.px; hh.value = Math.round(b.dataset.px / ratio()); });
+    $("#go", ctrls).onclick = async () => {
+      const c = document.createElement("canvas"); c.width = +w.value; c.height = +hh.value;
+      const ctx = c.getContext("2d"); ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      const jpg = file.type === "image/jpeg";
+      download(await canvasBlob(c, jpg ? "image/jpeg" : "image/png"), `${baseName(file.name)}_${c.width}x${c.height}.${jpg ? "jpg" : "png"}`);
+    };
+  },
+});
+
+tool({
+  id: "img-crop", cat: "รูปภาพ", icon: I.crop, name: "ครอป หมุน & กลับด้าน",
+  desc: "ตัดรูปตามสัดส่วนยอดนิยม (1:1, 4:5, 16:9, 9:16) หมุน 90° และกลับด้านซ้าย-ขวา",
+  keywords: "crop rotate flip ครอป ตัด หมุน square instagram story",
+  render(body) {
+    let img, file, rot = 0, flip = false;
+    const ui = h(`<div>
+      <div class="tabs" id="ratios"><button class="chip active" data-r="0">อิสระ (ทั้งภาพ)</button><button class="chip" data-r="1">1:1</button><button class="chip" data-r="0.8">4:5</button><button class="chip" data-r="1.7778">16:9</button><button class="chip" data-r="0.5625">9:16</button><button class="chip" data-r="1.3333">4:3</button></div>
+      <div class="row"><div class="field"><label>ตำแหน่งแนวนอน</label><input type="range" id="px" min="0" max="100" value="50"></div><div class="field"><label>ตำแหน่งแนวตั้ง</label><input type="range" id="py" min="0" max="100" value="50"></div><div class="field"><label>ซูม</label><input type="range" id="zm" min="100" max="300" value="100"></div></div>
+      <div class="actions"><button class="btn btn-ghost btn-sm" id="rl">⟲ หมุนซ้าย</button><button class="btn btn-ghost btn-sm" id="rr">⟳ หมุนขวา</button><button class="btn btn-ghost btn-sm" id="fl">⇋ กลับด้าน</button></div>
+      <div class="canvas-wrap"><canvas id="cv"></canvas></div>
+      <div class="actions"><button class="btn btn-gold" id="go" disabled>บันทึกรูป</button></div></div>`);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูปภาพ", hint: "ปรับแล้วดูตัวอย่างได้ทันที" }, async ([f]) => {
+      img = await loadImage(f); file = f; rot = 0; flip = false; $("#go", ui).disabled = false; draw();
+    }), ui);
+    let ratio = 0;
+    $("#ratios", ui).onclick = e => { const b = e.target.closest("[data-r]"); if (!b) return; ratio = +b.dataset.r; $$(".chip", ui).forEach(x => x.classList.toggle("active", x === b)); draw(); };
+    ["px", "py", "zm"].forEach(id => $("#" + id, ui).oninput = draw);
+    $("#rl", ui).onclick = () => { rot = (rot + 270) % 360; draw(); };
+    $("#rr", ui).onclick = () => { rot = (rot + 90) % 360; draw(); };
+    $("#fl", ui).onclick = () => { flip = !flip; draw(); };
+    // Render rotated/flipped source first, then crop from it.
+    function render() {
+      const sw = rot % 180 ? img.naturalHeight : img.naturalWidth, sh = rot % 180 ? img.naturalWidth : img.naturalHeight;
+      const src = document.createElement("canvas"); src.width = sw; src.height = sh;
+      const s = src.getContext("2d"); s.translate(sw / 2, sh / 2); s.rotate(rot * Math.PI / 180); if (flip) s.scale(-1, 1);
+      s.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      const z = $("#zm", ui).value / 100;
+      let cw = sw / z, ch = sh / z;
+      if (ratio) { if (cw / ch > ratio) cw = ch * ratio; else ch = cw / ratio; }
+      const x = (sw - cw) * $("#px", ui).value / 100, y = (sh - ch) * $("#py", ui).value / 100;
+      const out = document.createElement("canvas"); out.width = Math.round(cw); out.height = Math.round(ch);
+      out.getContext("2d").drawImage(src, x, y, cw, ch, 0, 0, out.width, out.height);
+      return out;
+    }
+    function draw() {
+      if (!img) return;
+      const out = render(), cv = $("#cv", ui);
+      cv.width = out.width; cv.height = out.height; cv.getContext("2d").drawImage(out, 0, 0);
+    }
+    $("#go", ui).onclick = async () => {
+      const jpg = file.type === "image/jpeg";
+      download(await canvasBlob(render(), jpg ? "image/jpeg" : "image/png"), baseName(file.name) + "_edit." + (jpg ? "jpg" : "png"));
+    };
+  },
+});
+
+tool({
+  id: "img-watermark", cat: "รูปภาพ", icon: I.stamp, name: "ใส่ลายน้ำ",
+  desc: "ใส่ข้อความลายน้ำบนรูป เลือกตำแหน่ง ขนาด ความโปร่งใส หรือแบบเรียงเต็มภาพ",
+  keywords: "watermark ลายน้ำ text copyright",
+  render(body) {
+    let img, file;
+    const ui = h(`<div><div class="row">
+      <div class="field"><label>ข้อความ</label><input class="input" id="t" value="© ของฉัน" /></div>
+      <div class="field"><label>ตำแหน่ง</label><select class="input" id="pos"><option value="br">ขวาล่าง</option><option value="bl">ซ้ายล่าง</option><option value="c">กึ่งกลาง</option><option value="tile">เรียงเต็มภาพ</option></select></div></div>
+      <div class="row"><div class="field"><label>ขนาด</label><input type="range" id="sz" min="2" max="15" value="5"></div><div class="field"><label>ความทึบ</label><input type="range" id="op" min="10" max="100" value="60"></div><div class="field" style="flex:0 0 90px"><label>สี</label><input type="color" id="col" value="#ffffff"></div></div>
+      <div class="canvas-wrap"><canvas id="cv"></canvas></div>
+      <div class="actions"><button class="btn btn-gold" id="go" disabled>บันทึกรูป</button></div></div>`);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูปภาพ", hint: "ดูตัวอย่างลายน้ำได้ทันที" }, async ([f]) => { img = await loadImage(f); file = f; $("#go", ui).disabled = false; draw(); }), ui);
+    $$("input, select", ui).forEach(el => el.oninput = draw);
+    function draw() {
+      if (!img) return;
+      const cv = $("#cv", ui), ctx = cv.getContext("2d");
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight; ctx.drawImage(img, 0, 0);
+      const fs = Math.max(12, cv.width * $("#sz", ui).value / 100), text = $("#t", ui).value, pos = $("#pos", ui).value;
+      ctx.font = `600 ${fs}px "IBM Plex Sans Thai", sans-serif`; ctx.fillStyle = $("#col", ui).value;
+      ctx.globalAlpha = $("#op", ui).value / 100; ctx.shadowColor = "rgba(0,0,0,.4)"; ctx.shadowBlur = fs / 6;
+      const m = fs * .8, tw = ctx.measureText(text).width;
+      if (pos === "tile") {
+        ctx.save(); ctx.translate(cv.width / 2, cv.height / 2); ctx.rotate(-Math.PI / 6);
+        const d = Math.hypot(cv.width, cv.height);
+        for (let y = -d / 2; y < d / 2; y += fs * 3) for (let x = -d / 2; x < d / 2; x += tw + fs * 2) ctx.fillText(text, x, y);
+        ctx.restore();
+      } else {
+        ctx.textBaseline = pos === "c" ? "middle" : "bottom";
+        const x = pos === "br" ? cv.width - tw - m : pos === "bl" ? m : (cv.width - tw) / 2;
+        ctx.fillText(text, x, pos === "c" ? cv.height / 2 : cv.height - m);
+      }
+      ctx.globalAlpha = 1;
+    }
+    $("#go", ui).onclick = async () => {
+      const jpg = file.type === "image/jpeg";
+      download(await canvasBlob($("#cv", ui), jpg ? "image/jpeg" : "image/png"), baseName(file.name) + "_wm." + (jpg ? "jpg" : "png"));
+    };
+  },
+});
+
+tool({
+  id: "img-colors", cat: "รูปภาพ", icon: I.drop, name: "ดูดสีจากรูป",
+  desc: "แตะบนรูปเพื่อดูดสี และสกัดพาเลตสีหลักของภาพอัตโนมัติ คัดลอก HEX ได้ทันที",
+  keywords: "eyedropper color picker palette ดูดสี พาเลต",
+  render(body) {
+    const ui = h(`<div><div class="canvas-wrap"><canvas id="cv" style="cursor:crosshair"></canvas></div>
+      <div class="result" id="pick" hidden></div><div class="swatches" id="sw"></div></div>`);
+    body.append(dropZone({ accept: "image/*", title: "เลือกรูปภาพ", hint: "แตะบนรูปเพื่อดูดสี" }, async ([f]) => {
+      const img = await loadImage(f), cv = $("#cv", ui), ctx = cv.getContext("2d", { willReadFrequently: true });
+      const s = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
+      cv.width = img.naturalWidth * s; cv.height = img.naturalHeight * s; ctx.drawImage(img, 0, 0, cv.width, cv.height);
+      // Palette: quantize to 4 bits per channel and take the most common buckets.
+      const d = ctx.getImageData(0, 0, cv.width, cv.height).data, buckets = {};
+      for (let i = 0; i < d.length; i += 16) { if (d[i + 3] < 128) continue; const k = (d[i] >> 4) << 8 | (d[i + 1] >> 4) << 4 | d[i + 2] >> 4; buckets[k] = (buckets[k] || 0) + 1; }
+      const top = Object.entries(buckets).sort((a, b) => b[1] - a[1]).map(([k]) => +k);
+      const picked = [];
+      for (const k of top) {
+        const c = [(k >> 8 & 15) * 17, (k >> 4 & 15) * 17, (k & 15) * 17];
+        if (picked.every(p => Math.hypot(p[0] - c[0], p[1] - c[1], p[2] - c[2]) > 60)) picked.push(c);
+        if (picked.length === 5) break;
+      }
+      const hex = c => "#" + c.map(v => pad(v.toString(16))).join("").toUpperCase();
+      $("#sw", ui).innerHTML = picked.map(c => `<button class="swatch" style="background:${hex(c)}" data-c="${hex(c)}"><span>${hex(c)}</span></button>`).join("");
+      $$(".swatch", ui).forEach(b => b.onclick = () => copy(b.dataset.c));
+      cv.onclick = e => {
+        const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) * cv.width / r.width, y = (e.clientY - r.top) * cv.height / r.height;
+        const p = ctx.getImageData(x, y, 1, 1).data, hx = hex([p[0], p[1], p[2]]);
+        const el = $("#pick", ui); el.hidden = false;
+        el.innerHTML = `<div style="display:flex;gap:14px;align-items:center"><span style="width:48px;height:48px;border-radius:12px;background:${hx};border:1px solid var(--border)"></span><div><b>${hx}</b><br><small>rgb(${p[0]}, ${p[1]}, ${p[2]})</small></div><button class="btn btn-ghost btn-sm" style="margin-left:auto">คัดลอก</button></div>`;
+        $("button", el).onclick = () => copy(hx);
+      };
+    }), ui);
+  },
+});
