@@ -94,13 +94,52 @@ function openTool(id) {
   $("#panelIcon").innerHTML = `<span class="ic">${t.icon}</span>`;
   $("#panelTitle").textContent = t.name; $("#panelDesc").textContent = t.desc;
   const body = $("#panelBody"); body.innerHTML = "";
-  try { cleanup = t.render(body); }
+  currentTool = t;
+  try { cleanup = t.render(body); restoreFields(t, body); }
   catch (err) { body.innerHTML = `<div class="status err">เกิดข้อผิดพลาด: ${esc(err.message)}</div>`; }
+  $("#panelFoot").hidden = t.persist === false;
   modal.classList.add("open"); modal.setAttribute("aria-hidden", "false"); document.body.classList.add("lock");
   history.replaceState(null, "", "#" + id);
   recent = [id, ...recent.filter(x => x !== id)].slice(0, 12); store.set("recent", recent);
   setTimeout(() => $(".close", modal).focus(), 50);
 }
+// ---------- Remember inputs per tool ----------
+// Every field with an id is saved per tool and restored on the next open. Tools whose fields may
+// hold secrets or depend on "now" opt out with persist: false.
+let currentTool, saveTimer;
+const fieldsOf = (body) => $$("input[id], select[id], textarea[id]", body).filter(el => el.type !== "file" && !el.readOnly);
+function restoreFields(t, body) {
+  const saved = t.persist === false ? null : store.get("inputs:" + t.id, null);
+  if (!saved) return;
+  for (const el of fieldsOf(body)) {
+    if (!(el.id in saved)) continue;
+    if (el.type === "checkbox" || el.type === "radio") el.checked = saved[el.id]; else el.value = saved[el.id];
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+function saveFields() {
+  const t = currentTool; if (!t || t.persist === false || !modal.classList.contains("open")) return;
+  const data = {};
+  for (const el of fieldsOf($("#panelBody"))) data[el.id] = el.type === "checkbox" || el.type === "radio" ? el.checked : el.value;
+  store.set("inputs:" + t.id, data);
+}
+["input", "change"].forEach(ev => $("#panelBody").addEventListener(ev, () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveFields, 300); }));
+$("#resetInputs").onclick = () => {
+  const t = currentTool; if (!t) return;
+  try { localStorage.removeItem("lumiere:inputs:" + t.id); } catch {}
+  clearTimeout(saveTimer); openTool(t.id); toast("ล้างค่าที่จำไว้แล้ว");
+};
+
+// ---------- Responsive tables ----------
+// Copy each column header onto its cells so narrow screens can show rows as labelled cards.
+new MutationObserver(() => {
+  for (const tbl of $$("#panelBody .data-table")) {
+    const heads = $$("thead th", tbl).map(th => th.textContent.trim());
+    for (const tr of $$("tbody tr, tfoot tr", tbl)) [...tr.children].forEach((td, i) => { if (heads[i] && td.dataset.label !== heads[i]) td.dataset.label = heads[i]; });
+  }
+}).observe($("#panelBody"), { childList: true, subtree: true });
+
 function runCleanup() { if (typeof cleanup === "function") { try { cleanup(); } catch {} } cleanup = null; }
 function closeTool() {
   runCleanup();

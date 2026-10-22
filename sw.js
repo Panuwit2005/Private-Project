@@ -1,7 +1,7 @@
 // Offline support: precache the app shell, then serve same-origin files from cache
 // while refreshing them in the background (stale-while-revalidate).
 // Bump VERSION whenever files change so clients pick up the new set.
-const VERSION = "lumiere-v3";
+const VERSION = "lumiere-v4";
 const SHELL = [
   "./", "index.html", "style-guide.html", "css/tokens.css", "css/app.css", "manifest.webmanifest",
   "js/app.js", "js/main.js",

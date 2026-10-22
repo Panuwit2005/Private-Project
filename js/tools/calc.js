@@ -189,7 +189,7 @@ tool({
 });
 
 tool({
-  id: "date-calc", cat: "calc", icon: I.cake, name: "คำนวณอายุ & วันที่",
+  id: "date-calc", cat: "calc", persist: false, icon: I.cake, name: "คำนวณอายุ & วันที่",
   desc: "คำนวณอายุแบบละเอียด นับจำนวนวันระหว่างสองวัน และบวก/ลบวันจากวันที่ที่กำหนด",
   keywords: "age date difference อายุ นับวัน ระยะเวลา วันเกิด countdown",
   render(body) {
@@ -352,7 +352,7 @@ tool({
 });
 
 tool({
-  id: "workdays", cat: "calc", icon: I.calendar, name: "นับวันทำงาน",
+  id: "workdays", cat: "calc", persist: false, icon: I.calendar, name: "นับวันทำงาน",
   desc: "นับวันทำงานระหว่างสองวัน ไม่รวมเสาร์-อาทิตย์และวันหยุดที่คุณกำหนด และหาวันครบกำหนดหลัง N วันทำการ",
   keywords: "working days วันทำการ นับวันทำงาน วันหยุด deadline",
   render(body) {

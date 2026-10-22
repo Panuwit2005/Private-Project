@@ -23,7 +23,7 @@ tool({
 });
 
 tool({
-  id: "base64", cat: "dev", icon: I.binary, name: "Base64 เข้ารหัส / ถอดรหัส",
+  id: "base64", cat: "dev", persist: false, icon: I.binary, name: "Base64 เข้ารหัส / ถอดรหัส",
   desc: "แปลงข้อความหรือไฟล์เป็น Base64 และถอดกลับ รองรับภาษาไทยเต็มรูปแบบ",
   keywords: "base64 encode decode เข้ารหัส developer data url",
   render(body) {
@@ -76,7 +76,7 @@ tool({
 });
 
 tool({
-  id: "hash", cat: "dev", icon: I.hash, name: "สร้าง Hash (SHA)",
+  id: "hash", cat: "dev", persist: false, icon: I.hash, name: "สร้าง Hash (SHA)",
   desc: "คำนวณ SHA-1, SHA-256, SHA-512 ของข้อความหรือไฟล์ ใช้ตรวจสอบความถูกต้องของไฟล์ที่ดาวน์โหลด",
   keywords: "hash sha256 sha1 sha512 checksum ตรวจสอบไฟล์",
   render(body) {
@@ -119,7 +119,7 @@ tool({
 });
 
 tool({
-  id: "timestamp", cat: "dev", icon: I.clock, name: "Unix Timestamp",
+  id: "timestamp", cat: "dev", persist: false, icon: I.clock, name: "Unix Timestamp",
   desc: "แปลง Unix timestamp ⇄ วันเวลา (ไทย/UTC/ISO) พร้อมเวลาปัจจุบันแบบสด",
   keywords: "unix timestamp epoch date time แปลงเวลา",
   render(body) {
@@ -168,7 +168,7 @@ tool({
 });
 
 tool({
-  id: "jwt", cat: "dev", icon: I.key, name: "JWT Decoder",
+  id: "jwt", cat: "dev", persist: false, icon: I.key, name: "JWT Decoder",
   desc: "ถอดรหัส JSON Web Token ดู Header, Payload และวันหมดอายุ (ไม่ส่งโทเคนออกจากเครื่อง)",
   keywords: "jwt token decode json web token auth",
   render(body) {
