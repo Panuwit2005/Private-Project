@@ -1,0 +1,5 @@
+{
+  "env": {
+    "ARCHIFY_CHROME": "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+  }
+}
