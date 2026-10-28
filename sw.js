@@ -1,7 +1,7 @@
 // Offline support: precache the app shell, then serve same-origin files from cache
 // while refreshing them in the background (stale-while-revalidate).
 // Bump VERSION whenever files change so clients pick up the new set.
-const VERSION = "lumiere-v8";
+const VERSION = "lumiere-v9";
 const SHELL = [
   "./", "index.html", "style-guide.html", "css/tokens.css", "css/app.css", "manifest.webmanifest",
   "js/app.js", "js/main.js",
@@ -11,7 +11,7 @@ const SHELL = [
   "vendor/pdf-lib.min.js", "vendor/jsQR.js", "vendor/marked.min.js",
   "vendor/pdf.min.js", "vendor/pdf.worker.min.js",
   "vendor/jszip.min.js", "vendor/xlsx.full.min.js", "vendor/mammoth.browser.min.js", "vendor/gifenc.js", "vendor/heic2any.min.js", "vendor/js-yaml.min.js", "vendor/html2canvas.min.js",
-  "icons/icon.svg", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png",
+  "icons/icon.svg", "icons/icon-180.png", "icons/icon-192.png", "icons/icon-512.png", "icons/maskable-512.png",
 ];
 
 self.addEventListener("install", e => {
