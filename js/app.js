@@ -53,6 +53,7 @@ const LIB = {
   heic: "vendor/heic2any.min.js",
   yaml: "vendor/js-yaml.min.js",
   html2canvas: "vendor/html2canvas.min.js",
+  supabase: "vendor/supabase.min.js",
 };
 const loaded = {};
 function loadScript(src) {
@@ -61,6 +62,18 @@ function loadScript(src) {
     s.onerror = () => { delete loaded[src]; rej(new Error("โหลดไลบรารีไม่สำเร็จ")); };
     document.head.appendChild(s);
   });
+}
+
+// Supabase (cloud database + login). The publishable key is safe in the browser;
+// access is controlled by Row Level Security policies on each table.
+// Never put the secret / service_role key here.
+const SUPABASE_URL = "https://tqffjnpqousdfeoetrus.supabase.co";
+const SUPABASE_KEY = "sb_publishable_9AH1AZV0yW0AADVoyXtEAw_eoM6JJEW";
+let sbClient;
+async function cloud() {
+  if (sbClient) return sbClient;
+  await loadScript(LIB.supabase);
+  return sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { flowType: "pkce" } }); // PKCE returns ?code=, leaving the hash router alone
 }
 
 function dropZone({ accept, multiple = false, title, hint }, onFiles) {
@@ -126,6 +139,7 @@ const I = {
   bank: icon('<path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10M2 10l10-7 10 7z"/>'),
   heart: icon('<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/>'),
   cake: icon('<path d="M20 21V12a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9M4 16s1.5-1 4-1 3 2 4 2 2.5-2 4-2 4 1 4 1M2 21h20M12 10V7M12 4h.01"/>'),
+  user: icon('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
   users: icon('<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>'),
   ruler: icon('<path d="M21.3 8.7 8.7 21.3a1 1 0 0 1-1.4 0l-4.6-4.6a1 1 0 0 1 0-1.4L15.3 2.7a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4zM7.5 10.5l2 2M10.5 7.5l2 2M13.5 4.5l2 2M4.5 13.5l2 2"/>'),
   note: icon('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>'),

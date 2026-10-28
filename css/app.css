@@ -187,6 +187,15 @@ input[type=color] { width: 100%; height: 46px; border-radius: 12px; border: 1px 
 .count { color: var(--color-text-subtle); font-size: .85rem; text-align: center; margin: -20px 0 26px; }
 .install { display: none; }
 .install.show { display: inline-flex; }
+.nav-acts { display: flex; align-items: center; gap: 8px; }
+.account-btn.signed-in { padding: 0; width: var(--control-height-sm); justify-content: center; }
+.avatar-sm, .avatar-lg { display: inline-grid; place-items: center; border-radius: 50%; background: rgba(216, 180, 106, .16); color: var(--color-accent); font-weight: 600; }
+.avatar-sm { width: 28px; height: 28px; font-size: .85rem; }
+.avatar-lg { width: 52px; height: 52px; font-size: 1.3rem; flex: none; }
+.account-card { display: flex; gap: var(--space-4); align-items: center; padding: var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--surface-glass); }
+.account-card div { display: grid; gap: 2px; min-width: 0; }
+.account-card b { overflow-wrap: anywhere; }
+.account-card span { color: var(--color-text-muted); font-size: var(--text-sm); }
 
 /* generic widgets */
 .big { font-family: var(--font-body); font-weight: 300; font-size: clamp(2.8rem, 11vw, 5rem); line-height: 1.1; text-align: center; font-variant-numeric: tabular-nums; margin: 10px 0; }
